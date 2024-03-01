@@ -25,7 +25,7 @@ class _InternetPageState extends State<InternetPage> {
 
   getDataSub() async {
     var serverResponse =
-        await serviceProvider.getServiceProvider(userProfile['token']);
+        await serviceProvider.getServiceProvider(context, userProfile['token']);
     if (serverResponse['isSuccess'] == false) {
       if (serverResponse['errorMsg'] != '') {
         serviceProvider.popWarningErrorMsg(

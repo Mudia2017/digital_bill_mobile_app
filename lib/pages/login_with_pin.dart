@@ -11,6 +11,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -64,9 +65,8 @@ class _LoginWithPinState extends State<LoginWithPin> {
     Map data = {'email': email};
     var serverResponse = {};
     var response = await http.post(
-      Uri.parse('http://192.168.43.50:8000/api/v1/main/api_acctProfilePix/'),
-      // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_acctProfilePix/'),
-      // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_acctProfilePix/'),
+      Uri.parse(
+          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_acctProfilePix/'),
       body: jsonEncode(data),
       headers: {
         "Content-Type": "application/json",
@@ -81,7 +81,7 @@ class _LoginWithPinState extends State<LoginWithPin> {
 
       serverResponse = json.decode(response.body);
       if (serverResponse['isSuccess'] == true) {
-        if (serverResponse['image'] == 'http://192.168.43.50:8000') {
+        if (serverResponse['image'] == dotenv.env['URL_ENDPOINT']) {
           setState(() {
             ServiceProvider.profileImgFrmServer = '';
           });
@@ -108,10 +108,7 @@ class _LoginWithPinState extends State<LoginWithPin> {
     var response = await http
         .post(
             Uri.parse(
-                'http://192.168.43.50:8000/api/v1/main/api_login_with_pin/'),
-            // Uri.parse(
-            //     'http://192.168.100.88:8000/api/v1/main/api_login_with_pin/'),
-            // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_login_with_pin/'),
+                '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_login_with_pin/'),
             body: json.encode(data),
             headers: {
               "Content-Type": "application/json",
@@ -513,6 +510,7 @@ class _LoginWithPinState extends State<LoginWithPin> {
                 Container(
                   width: 60.0,
                   child: MaterialButton(
+                    splashColor: ServiceProvider.redWarningColor,
                     highlightColor: Colors.blue,
                     height: 60.0,
                     shape: RoundedRectangleBorder(
@@ -646,11 +644,13 @@ class _LoginWithPinState extends State<LoginWithPin> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          if (ServiceProvider.profileImgFrmServer != '')
+          if (ServiceProvider.profileImgFrmServer != '' &&
+              ServiceProvider.profileImgFrmServer != dotenv.env['URL_ENDPOINT'])
             CircleAvatar(
-                radius: 30,
-                backgroundImage:
-                    NetworkImage(ServiceProvider.profileImgFrmServer))
+              radius: 30,
+              backgroundImage:
+                  NetworkImage(ServiceProvider.profileImgFrmServer),
+            )
           else
             CircleAvatar(
                 radius: 30,
@@ -670,9 +670,13 @@ class _LoginWithPinState extends State<LoginWithPin> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Text(
-            'Hi ${widget.userName},',
-            style: ServiceProvider.greetUserFont1,
+          Flexible(
+            child: Text(
+              'Hi ${widget.userName},',
+              style: ServiceProvider.greetUserFont1,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           )
         ],
       ),

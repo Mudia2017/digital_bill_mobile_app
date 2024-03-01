@@ -9,6 +9,7 @@ import 'package:digital_mobile_bill/route/route.dart';
 import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -88,54 +89,45 @@ class _AccountProfileState extends State<AccountProfile> {
   //   }
   // }
 
-  uploadProfilePix(File imageFile) async {
+  // USED TO DELETE PROFILE PICTURE.
+  // THE LOADING EFFECT DISPLAY ERROR WHILE POPPING, WHILE TO TOAST MESSAGE
+  // ALSO DISPLAY AN ERROR. THIS IS WHY IT'S NOT IN THE SERVICE PROVIDER FILE.
+  Future setUpdateAcct(context, String token, Map data) async {
     var serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
-    var serverRes = '';
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    serviceProvider.hudLoadingEffect(context, true);
+    var serverResponse;
+    // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
+    // serviceProvider.hudLoadingEffect(context, true);
 
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse("http://192.168.43.50:8000/api/v1/main/api_set_updateAcct/"),
-      // Uri.parse("http://192.168.100.88:8000/api/v1/main/api_set_updateAcct/"),
-    );
-    Map<String, String> headers = {
-      "Authorization": "Token $token",
-      "Content-type": "multipart/form-data"
-    };
-    if (imageFile.path != '') {
-      request.files.add(
-        http.MultipartFile(
-          'image',
-          imageFile.readAsBytes().asStream(),
-          imageFile.lengthSync(),
+    // Map data = {'call': call, '_isShowAcctBal': isShowAcctBal};
 
-          filename: imageFile.path.split('/').last,
-          // contentType: MediaType('image','jpeg'),
-        ),
-      );
-    }
-
-    request.headers.addAll(headers);
-
-    var response = await request.send();
+    var response = await http
+        .post(
+          Uri.parse(
+              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_set_updateAcct/'),
+          // body: json.encode(),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Token $token",
+          },
+          // encoding: Encoding.getByName("utf-8")
+          body: jsonEncode(data),
+        )
+        .timeout(const Duration(seconds: 60));
 
     if (response.statusCode == 200) {
       // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      serviceProvider.hudLoadingEffect(context, false);
-      serverRes = await response.stream.bytesToString();
+      // serviceProvider.hudLoadingEffect(context, false);
 
-      print(serverRes);
-      // var serverResponse = json.decode(response);
-      //   serverReply = serverResponse;
+      serverResponse = json.decode(response.body);
+      serviceProvider.isShowBal = serverResponse['isBalVisible'];
     } else {
-      serverRes = await response.stream.bytesToString();
       // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      serviceProvider.hudLoadingEffect(context, false);
-      print(serverRes);
-    }
+      // serviceProvider.hudLoadingEffect(context, false);
 
-    return serverRes;
+      serviceProvider.showErrorToast(context, 'Fail to update');
+    }
+    // notifyListeners();
+    return serverResponse;
   }
 
   FutureOr _refreshData() async {
@@ -152,197 +144,206 @@ class _AccountProfileState extends State<AccountProfile> {
     // imageFromPreference = serviceProvider.loadImageFromPreferences();
     // if (serviceProvider.name != '') {}
     return Scaffold(
-      body: SafeArea(
-        child: WillPopScope(
-          onWillPop: () async {
-            bool isResponse =
-                await serviceProvider.popWarningConfirmActionYesNo(context,
-                    'Warning', 'Do you want to exit the app?', Colors.white60);
-            if (isResponse == true) {
-              SystemNavigator.pop();
-            }
-            return Future.value(false);
-          },
-          child: Container(
-            // color: ServiceProvider.backGroundColor,
-            height: screenH,
-            width: screenW,
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Column(
-              children: [
-                Text(
-                  'Profile Settings',
-                  style: ServiceProvider.pageNameFont,
-                ),
-                SizedBox(
-                  height: screenH * 0.04,
-                ),
-                Text(
-                  'Hello $name, personalize your account content',
-                  style: ServiceProvider.greetUserFont1,
-                ),
-                _avatarIcon(),
-                SizedBox(
-                  height: screenH * 0.02,
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(children: [
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context)
-                              .pushNamed(RouteManager.editProfile, arguments: {
-                            'name': name,
-                            'email': email,
-                            'token': token,
-                            'mobile': mobile,
-                          }).then((_) {
-                            _refreshData();
-                          });
-                        },
-                        child: profileListTileStructure(
-                          Icons.person,
-                          themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
-                          'Profile',
-                          themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
-                        ),
+      body: WillPopScope(
+        onWillPop: () async {
+          bool isResponse = await serviceProvider.popWarningConfirmActionYesNo(
+              context,
+              'Warning',
+              'Do you want to exit the app?',
+              Colors.white60);
+          if (isResponse == true) {
+            SystemNavigator.pop();
+          }
+          return Future.value(false);
+        },
+        child: Container(
+          // color: ServiceProvider.backGroundColor,
+          height: screenH,
+          width: screenW,
+          padding: const EdgeInsets.fromLTRB(20, 50, 20, 0),
+          child: Column(
+            children: [
+              Text(
+                'Profile Settings',
+                style: ServiceProvider.pageNameFont,
+              ),
+              SizedBox(
+                height: screenH * 0.04,
+              ),
+              Text(
+                'Hello $name, personalize your account content',
+                style: ServiceProvider.greetUserFont1,
+              ),
+              _avatarIcon(),
+              SizedBox(
+                height: screenH * 0.02,
+              ),
+              Divider(
+                color: themeManager.currentTheme == ThemeMode.light
+                    ? Colors.black38
+                    : Colors.white38,
+                height: 0,
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(children: [
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.editProfile, arguments: {
+                          'name': name,
+                          'email': email,
+                          'token': token,
+                          'mobile': mobile,
+                        }).then((_) {
+                          _refreshData();
+                        });
+                      },
+                      child: profileListTileStructure(
+                        Icons.person,
+                        themeManager.currentTheme == ThemeMode.light
+                            ? Colors.black
+                            : ServiceProvider.whiteColorShade70,
+                        'Profile',
+                        themeManager.currentTheme == ThemeMode.light
+                            ? Colors.black
+                            : ServiceProvider.whiteColorShade70,
                       ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context).pushNamed(
-                              RouteManager.referralCode,
-                              arguments: {'name': name});
-                        },
-                        child: profileListTileStructure(
-                          Icons.group_add,
-                          themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
-                          'Referral',
-                          themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
-                        ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).pushNamed(
+                            RouteManager.referralCode,
+                            arguments: {'name': name});
+                      },
+                      child: profileListTileStructure(
+                        Icons.group_add,
+                        themeManager.currentTheme == ThemeMode.light
+                            ? Colors.black
+                            : ServiceProvider.whiteColorShade70,
+                        'Referral',
+                        themeManager.currentTheme == ThemeMode.light
+                            ? Colors.black
+                            : ServiceProvider.whiteColorShade70,
                       ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context)
-                              .pushNamed(RouteManager.helpContact, arguments: {
-                            'name': name,
-                            'email': email,
-                            'token': token,
-                            'mobile': mobile,
-                          });
-                        },
-                        child: profileListTileStructure(
-                          Icons.help,
-                          themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
-                          'Customer Service',
-                          themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
-                        ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.helpContact, arguments: {
+                          'name': name,
+                          'email': email,
+                          'token': token,
+                          'mobile': mobile,
+                        });
+                      },
+                      child: profileListTileStructure(
+                        Icons.help,
+                        themeManager.currentTheme == ThemeMode.light
+                            ? Colors.black
+                            : ServiceProvider.whiteColorShade70,
+                        'Customer Service',
+                        themeManager.currentTheme == ThemeMode.light
+                            ? Colors.black
+                            : ServiceProvider.whiteColorShade70,
                       ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context)
-                              .pushNamed(RouteManager.settings, arguments: {
-                            'name': name,
-                            'email': email,
-                            'token': token,
-                          }).then((_) {
-                            setState(() {});
-                          });
-                        },
-                        child: profileListTileStructure(
-                          Icons.settings_applications,
-                          themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
-                          'Settings',
-                          themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
-                        ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.settings, arguments: {
+                          'name': name,
+                          'email': email,
+                          'token': token,
+                        }).then((_) {
+                          setState(() {});
+                        });
+                      },
+                      child: profileListTileStructure(
+                        Icons.settings_applications,
+                        themeManager.currentTheme == ThemeMode.light
+                            ? Colors.black
+                            : ServiceProvider.whiteColorShade70,
+                        'Settings',
+                        themeManager.currentTheme == ThemeMode.light
+                            ? Colors.black
+                            : ServiceProvider.whiteColorShade70,
                       ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context)
-                              .pushNamed(RouteManager.userAgreement);
-                        },
-                        child: profileListTileStructure(
-                          Icons.document_scanner,
-                          themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
-                          'Legal',
-                          themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
-                        ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.userAgreement);
+                      },
+                      child: profileListTileStructure(
+                        Icons.document_scanner,
+                        themeManager.currentTheme == ThemeMode.light
+                            ? Colors.black
+                            : ServiceProvider.whiteColorShade70,
+                        'Legal',
+                        themeManager.currentTheme == ThemeMode.light
+                            ? Colors.black
+                            : ServiceProvider.whiteColorShade70,
                       ),
-                      InkWell(
-                        onTap: () async {
-                          // ======== DIALOG POP UP CONTEXT FOR SIGN OUT ===============
-                          bool isResponse = await serviceProvider
-                              .popWarningConfirmActionYesNo(context, 'Warning',
-                                  'Do you want to log out?', Colors.white60);
-                          if (isResponse) {
-                            var response =
-                                await serviceProvider.signOutAcct(token);
-                            if (response['isSuccess']) {
-                              await serviceProvider.deleteDefaultNumFrmPref();
-                              bool isSignOut = await serviceProvider.signOut();
-                              if (isSignOut) {
-                                Navigator.of(context).pushNamedAndRemoveUntil(
-                                  RouteManager.login,
-                                  (Route<dynamic> route) => false,
-                                  arguments: {'isLastStack': true},
-                                );
-                              }
+                    ),
+                    InkWell(
+                      onTap: () async {
+                        // ======== DIALOG POP UP CONTEXT FOR SIGN OUT ===============
+                        bool isResponse =
+                            await serviceProvider.popWarningConfirmActionYesNo(
+                                context,
+                                'Warning',
+                                'Do you want to log out?',
+                                Colors.white60);
+                        if (isResponse) {
+                          var response =
+                              await serviceProvider.signOutAcct(token);
+                          if (response['isSuccess']) {
+                            await serviceProvider.deleteDefaultNumFrmPref();
+                            bool isSignOut = await serviceProvider.signOut();
+                            if (isSignOut) {
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                RouteManager.login,
+                                (Route<dynamic> route) => false,
+                                arguments: {'isLastStack': true},
+                              );
                             }
-                            // switch (response['isSuccess']) {
-
-                            // case true:
-                            //   print('LOGGED OUT FROM SERVER');
-                            //   bool isSignOut =
-                            //       await serviceProvider.signOut();
-                            //   if (isSignOut) {
-                            //     Navigator.of(context).pushNamedAndRemoveUntil(
-                            //       RouteManager.login,
-                            //       (Route<dynamic> route) => false,
-                            //     );
-                            //   }
-                            //   break;
-                            // case false:
-                            //   print('NOT LOG OUT');
-                            //   break;
-
-                            // default:
-                            //   print('ERROR MESSAGE');
-                            // }
                           }
-                        },
-                        child: profileListTileStructure(
-                          Icons.logout_rounded,
-                          ServiceProvider.redWarningColor,
-                          'Sign Out',
-                          ServiceProvider.redWarningColor,
-                        ),
+                          // switch (response['isSuccess']) {
+
+                          // case true:
+                          //   print('LOGGED OUT FROM SERVER');
+                          //   bool isSignOut =
+                          //       await serviceProvider.signOut();
+                          //   if (isSignOut) {
+                          //     Navigator.of(context).pushNamedAndRemoveUntil(
+                          //       RouteManager.login,
+                          //       (Route<dynamic> route) => false,
+                          //     );
+                          //   }
+                          //   break;
+                          // case false:
+                          //   print('NOT LOG OUT');
+                          //   break;
+
+                          // default:
+                          //   print('ERROR MESSAGE');
+                          // }
+                        }
+                      },
+                      child: profileListTileStructure(
+                        Icons.logout_rounded,
+                        ServiceProvider.redWarningColor,
+                        'Sign Out',
+                        ServiceProvider.redWarningColor,
                       ),
-                    ]),
-                  ),
+                    ),
+                  ]),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -360,7 +361,8 @@ class _AccountProfileState extends State<AccountProfile> {
       final imageTemperary = File(image.path);
       serviceProvider.isLifeCycleState =
           isCycleState; // THIS IS USED ON THE LIFE-CYCLE-STATE
-      var response = await uploadProfilePix(imageTemperary);
+      var response = await serviceProvider.uploadProfilePix(
+          context, token, imageTemperary);
       if (response == '{"isSuccess": true}') {
         // serviceProvider.isProfilePix = true;
         setState(() {
@@ -436,36 +438,143 @@ class _AccountProfileState extends State<AccountProfile> {
           margin: const EdgeInsets.only(left: 10.0),
           child: InkWell(
             onTap: () {
-              uploadImageOption();
+              Map data = {
+                'isShowAcctBal': false,
+                'call': 'removeProfilePhoto',
+              };
+              showModalBottomSheet(
+                  shape: const RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(30.0)),
+                  ),
+                  backgroundColor: themeManager.currentTheme == ThemeMode.light
+                      ? ServiceProvider.backGroundColor
+                      : ServiceProvider.darkNavyBGColor,
+                  context: context,
+                  builder: (builder) {
+                    return StatefulBuilder(builder: (context, setstate) {
+                      return SizedBox(
+                        height: 230,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ServiceProvider.bottomSheetBarHeader,
+                            const SizedBox(height: 30),
+                            Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(''),
+                                  Text(
+                                    'Profile Photo',
+                                    style: ServiceProvider.pageNameFont,
+                                  ),
+                                  // if (serviceProvider.isProfilePix &&
+                                  //     imageFile == null &&
+                                  //     profilePix != 'http://192.168.43.50:8000')
+                                  if (
+                                  // serviceProvider.isUpdateProfilePix ||
+                                  ServiceProvider.temporaryLocalImg != null ||
+                                      ServiceProvider.profileImgFrmServer !=
+                                              '' &&
+                                          ServiceProvider.profileImgFrmServer !=
+                                              dotenv.env['URL_ENDPOINT'])
+                                    IconButton(
+                                        onPressed: () async {
+                                          bool isResponse = await serviceProvider
+                                              .popWarningConfirmActionYesNo(
+                                                  context,
+                                                  'Warning',
+                                                  'You want to remove profile photo?',
+                                                  Colors.white60);
+
+                                          Navigator.of(context).pop();
+                                          setState(() {});
+                                          if (isResponse) {
+                                            var response = await setUpdateAcct(
+                                              context,
+                                              token,
+                                              data,
+                                            );
+
+                                            if (response['isSuccess'] == true) {
+                                              print('IMAGE DELETED FROM DB');
+                                              // await serviceProvider
+                                              //     .delProfilePixFrmPreference();
+                                              setState(() {
+                                                imageFile = null;
+                                                ServiceProvider
+                                                    .temporaryLocalImg = null;
+                                                ServiceProvider
+                                                    .profileImgFrmServer = '';
+                                              });
+
+                                              // serviceProvider.showToast(context,
+                                              //     'Profile picture updated');
+                                            }
+                                            print('REMOVE PHOTO');
+                                          }
+                                        },
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: Colors.grey,
+                                          size: 30,
+                                        ))
+                                  else
+                                    const Text('')
+                                ]),
+                            Divider(
+                              color:
+                                  themeManager.currentTheme == ThemeMode.light
+                                      ? Colors.black38
+                                      : Colors.white38,
+                              height: 0,
+                            ),
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.05,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                InkWell(
+                                  onTap: () async {
+                                    serviceProvider.isLifeCycleState =
+                                        false; // THIS IS USED ON THE LIFE-CYCLE-STATE)
+                                    Navigator.of(context).pop();
+                                    pickImage(ImageSource.camera);
+                                  },
+                                  child: structureGalleryCam(
+                                      Icons.linked_camera, 'Camera'),
+                                ),
+                                InkWell(
+                                  onTap: () async {
+                                    serviceProvider.isLifeCycleState =
+                                        false; // THIS IS USED ON THE LIFE-CYCLE-STATE)
+                                    Navigator.of(context).pop();
+                                    pickImage(ImageSource.gallery);
+                                  },
+                                  child: structureGalleryCam(
+                                      Icons.picture_in_picture, 'Gallery'),
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    });
+                  });
             },
             child: Stack(
               children: [
-                // if (!serviceProvider.isProfilePix)
-                //   CircleAvatar(
-                //       radius: 40,
-                //       backgroundColor: ServiceProvider.lightgray2,
-                //       child: Icon(
-                //         Icons.person,
-                //         size: 70,
-                //         color: Colors.grey.shade600,
-                //       ))
                 if (imageFile != null)
                   CircleAvatar(
                     radius: 40,
                     // backgroundColor: ServiceProvider.lightgray2,
                     backgroundImage: FileImage(imageFile!),
                   )
-                // else if (serviceProvider.isProfilePix &&
-                //     profilePix == 'http://192.168.43.50:8000')
-                //   CircleAvatar(
-                //       radius: 40,
-                //       backgroundColor: ServiceProvider.lightgray2,
-                //       child: Icon(
-                //         Icons.person,
-                //         size: 70,
-                //         color: Colors.grey.shade600,
-                //       )),
-                else if (ServiceProvider.profileImgFrmServer != '')
+                else if (ServiceProvider.profileImgFrmServer != '' &&
+                    ServiceProvider.profileImgFrmServer !=
+                        dotenv.env['URL_ENDPOINT'])
                   CircleAvatar(
                       radius: 40,
                       backgroundImage:
@@ -484,18 +593,6 @@ class _AccountProfileState extends State<AccountProfile> {
                         size: 70,
                         color: Colors.grey.shade600,
                       )),
-                // else if (imageFromPreference != null)
-                //   CircleAvatar(
-                //     radius: 40,
-                //     backgroundImage: (imageFromPreference!.image),
-                //   ),
-
-                // else
-                //   CircleAvatar(
-                //     radius: 40,
-                //     backgroundColor: ServiceProvider.lightgray2,
-                //     backgroundImage: NetworkImage(profilePix),
-                //   ),
                 Positioned(
                   bottom: 0,
                   right: 0,
@@ -517,128 +614,6 @@ class _AccountProfileState extends State<AccountProfile> {
         ),
       ]),
     );
-  }
-
-  uploadImageOption() {
-    var serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
-    Map data = {
-      'isShowAcctBal': false,
-      'call': 'removeProfilePhoto',
-    };
-    return showModalBottomSheet(
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30.0)),
-        ),
-        backgroundColor: themeManager.currentTheme == ThemeMode.light
-            ? ServiceProvider.backGroundColor
-            : ServiceProvider.darkNavyBGColor,
-        context: context,
-        builder: (builder) {
-          return StatefulBuilder(builder: (context, setstate) {
-            return SizedBox(
-              height: 230,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ServiceProvider.bottomSheetBarHeader,
-                  Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(''),
-                        Text(
-                          'Profile Photo',
-                          style: ServiceProvider.pageNameFont,
-                        ),
-                        // if (serviceProvider.isProfilePix &&
-                        //     imageFile == null &&
-                        //     profilePix != 'http://192.168.43.50:8000')
-                        if (
-                        // serviceProvider.isUpdateProfilePix ||
-                        ServiceProvider.temporaryLocalImg != null ||
-                            ServiceProvider.profileImgFrmServer != '')
-                          IconButton(
-                              onPressed: () async {
-                                bool isResponse = await serviceProvider
-                                    .popWarningConfirmActionYesNo(
-                                        context,
-                                        'Warning',
-                                        'You want to remove profile photo?',
-                                        Colors.white60);
-
-                                Navigator.of(context).pop();
-                                setState(() {});
-                                if (isResponse) {
-                                  var response =
-                                      await serviceProvider.setUpdateAcct(
-                                    context,
-                                    token,
-                                    data,
-                                    // false,
-                                    // 'removeProfilePhoto',
-                                  );
-                                  if (response['isSuccess'] == true) {
-                                    print('IMAGE DELETED FROM DB');
-                                    // await serviceProvider
-                                    //     .delProfilePixFrmPreference();
-                                    setState(() {
-                                      imageFile = null;
-                                      ServiceProvider.temporaryLocalImg = null;
-                                      ServiceProvider.profileImgFrmServer = '';
-                                    });
-
-                                    serviceProvider.showToast(
-                                        context, 'Profile picture updated');
-                                  }
-                                  print('REMOVE PHOTO');
-                                }
-                              },
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.grey,
-                                size: 30,
-                              ))
-                        else
-                          const Text('')
-                      ]),
-                  Divider(
-                    color: themeManager.currentTheme == ThemeMode.light
-                        ? Colors.black38
-                        : Colors.white38,
-                    height: 0,
-                  ),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.05,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      InkWell(
-                        onTap: () async {
-                          serviceProvider.isLifeCycleState =
-                              false; // THIS IS USED ON THE LIFE-CYCLE-STATE)
-                          Navigator.of(context).pop();
-                          pickImage(ImageSource.camera);
-                        },
-                        child:
-                            structureGalleryCam(Icons.linked_camera, 'Camera'),
-                      ),
-                      InkWell(
-                        onTap: () async {
-                          serviceProvider.isLifeCycleState =
-                              false; // THIS IS USED ON THE LIFE-CYCLE-STATE)
-                          Navigator.of(context).pop();
-                          pickImage(ImageSource.gallery);
-                        },
-                        child: structureGalleryCam(
-                            Icons.picture_in_picture, 'Gallery'),
-                      )
-                    ],
-                  ),
-                ],
-              ),
-            );
-          });
-        });
   }
 
   Widget profileListTileStructure(

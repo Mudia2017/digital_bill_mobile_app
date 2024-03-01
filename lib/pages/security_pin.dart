@@ -4,6 +4,7 @@ import 'package:digital_mobile_bill/components/service_provider.dart';
 import 'package:digital_mobile_bill/route/route.dart';
 import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -44,9 +45,8 @@ class _SecurityPinState extends State<SecurityPin> {
 
     var response = await http
         .post(
-            Uri.parse('http://192.168.43.50:8000/api/v1/main/api_secure_pin/'),
-            // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_secure_pin/'),
-            // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_secure_pin/'),
+            Uri.parse(
+                '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_secure_pin/'),
             body: json.encode(data),
             headers: {
               "Content-Type": "application/json",
@@ -218,7 +218,7 @@ class _SecurityPinState extends State<SecurityPin> {
           );
         }).then((value) {
       Navigator.of(context)
-          .pushReplacementNamed(RouteManager.homePage, arguments: {
+          .pushReplacementNamed(RouteManager.profilePhoto, arguments: {
         'token': widget.token,
         'name': widget.name,
         'email': widget.email,
@@ -332,6 +332,7 @@ class _SecurityPinState extends State<SecurityPin> {
                 Container(
                   width: 60.0,
                   child: MaterialButton(
+                    splashColor: ServiceProvider.redWarningColor,
                     highlightColor: Colors.blue,
                     height: 60.0,
                     shape: RoundedRectangleBorder(

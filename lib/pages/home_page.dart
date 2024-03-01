@@ -16,6 +16,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
@@ -151,7 +152,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         serviceProvider.isLifeCycleState =
             serverResponse['userProfile']['is_lock_inactive_mode'];
         if (serverResponse['userProfile']['image'] ==
-            'http://192.168.43.50:8000') {
+            dotenv.env['URL_ENDPOINT']) {
           ServiceProvider.profileImgFrmServer = '';
         } else {
           ServiceProvider.profileImgFrmServer =
@@ -195,6 +196,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     setState(() {
       ServiceProvider.acctBal = widget.acctBal;
     });
+    serviceProvider.isBiometricVal =
+        await serviceProvider.getBiometric() as bool;
   }
 
   loadImageFromPreferences() async {
@@ -253,8 +256,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         bottomNavigationBar: bottomNavBar(),
         body: AnimatedSwitcher(
           duration: const Duration(seconds: 60),
-          child: SafeArea(
-              child: SizedBox(
+          child: SizedBox(
             height: h,
             child: Stack(
               children: [
@@ -263,7 +265,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 if (_selectIndex > 0) _widgetOptions.elementAt(_selectIndex),
               ],
             ),
-          )),
+          ),
         ),
       ),
     );
@@ -364,6 +366,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(
+            height: 30,
+          ),
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 1.0, end: 0.0),
             duration: const Duration(seconds: 2),
@@ -425,22 +430,32 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               );
             },
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  'Available Balance',
-                  style: ServiceProvider.blueWriteOnBlueBgColorFont,
+                  'Welcome ',
+                  style: ServiceProvider.blueBgFontName,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  textAlign: TextAlign.right,
                 ),
-                SizedBox(
-                  width: screenW * 0.55,
+                Flexible(
                   child: Text(
-                    'Welcome $name !',
-                    style: ServiceProvider.blueBgFontName,
-                    overflow: TextOverflow.ellipsis,
+                    '$name!',
+                    style: GoogleFonts.sarabun(
+                      fontWeight: FontWeight.w200,
+                    ).copyWith(
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic,
+                      color: themeManager.currentTheme == ThemeMode.light
+                          ? Colors.white
+                          : ServiceProvider.lightBlueWriteColor,
+                    ),
                     maxLines: 1,
-                    textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
                   ),
-                ),
+                )
               ],
             ),
           ),
@@ -531,7 +546,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                           Navigator.of(context).pushNamed(
                                               RouteManager.dataPage,
                                               arguments: {
-                                                'balance': '3000',
                                                 'providerChoice': 'mtnData'
                                               });
                                         },
@@ -559,7 +573,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                           Navigator.of(context).pushNamed(
                                               RouteManager.dataPage,
                                               arguments: {
-                                                'balance': '3000',
                                                 'providerChoice': 'gloData'
                                               });
                                         },
@@ -584,7 +597,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                           Navigator.of(context).pushNamed(
                                               RouteManager.dataPage,
                                               arguments: {
-                                                'balance': '3000',
                                                 'providerChoice': 'airtelData'
                                               });
                                         },
@@ -609,7 +621,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                           Navigator.of(context).pushNamed(
                                               RouteManager.dataPage,
                                               arguments: {
-                                                'balance': '3000',
                                                 'providerChoice': '9mobileData'
                                               });
                                         },
@@ -992,16 +1003,24 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     var serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
     return Container(
       child: Flexible(
-        child: Text(
-          serviceProvider.isShowBal
-              ? "₦ ${serviceProvider.numberFormater(double.parse(ServiceProvider.acctBal))}"
-              : '****',
-          style: GoogleFonts.sarabun().copyWith(
-            color: Colors.white,
-            fontSize: 25,
-          ),
-          overflow: TextOverflow.ellipsis,
-          maxLines: 2,
+        child: Column(
+          children: [
+            Text(
+              serviceProvider.isShowBal
+                  ? "₦ ${serviceProvider.numberFormater(double.parse(ServiceProvider.acctBal))}"
+                  : '****',
+              style: GoogleFonts.sarabun().copyWith(
+                color: Colors.white,
+                fontSize: 25,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
+            Text(
+              'Available Balance',
+              style: ServiceProvider.blueWriteOnBlueBgColorFont,
+            ),
+          ],
         ),
       ),
     );
@@ -1040,7 +1059,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         margin: const EdgeInsets.only(left: 10.0),
         child: Column(
           children: [
-            if (ServiceProvider.profileImgFrmServer != '')
+            if (ServiceProvider.profileImgFrmServer != '' &&
+                ServiceProvider.profileImgFrmServer !=
+                    dotenv.env['URL_ENDPOINT'])
               CircleAvatar(
                   radius: 30,
                   backgroundImage:
@@ -1052,33 +1073,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               )
             else
               CircleAvatar(
-                  radius: 30,
-                  backgroundColor: ServiceProvider.innerBlueBackgroundColor,
-                  child: const Icon(
-                    Icons.person,
-                    size: 60,
-                  ))
-
-            // if (profileImg == "" || profileImg == "http://192.168.43.50:8000")
-            //   CircleAvatar(
-            //       radius: 25,
-            //       backgroundColor: ServiceProvider.innerBlueBackgroundColor,
-            //       child: const Icon(
-            //         Icons.person,
-            //         size: 50,
-            //       ))
-            // // else if (serviceProvider.isUpdateProfilePix)
-            // //   CircleAvatar(
-            // //     radius: 30,
-            // //     backgroundColor: ServiceProvider.innerBlueBackgroundColor,
-            // //     backgroundImage: imageFromPreference!.image,
-            // //   )
-            // else
-            //   CircleAvatar(
-            //     radius: 30,
-            //     backgroundColor: ServiceProvider.innerBlueBackgroundColor,
-            //     backgroundImage: NetworkImage(profileImg),
-            //   ),
+                radius: 30,
+                backgroundColor: ServiceProvider.innerBlueBackgroundColor,
+                child: const Icon(
+                  Icons.person,
+                  size: 60,
+                ),
+              ),
           ],
         ),
       ),
@@ -1173,7 +1174,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               topRight: Radius.circular(35), topLeft: Radius.circular(35)),
         ),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+          padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
           child: Column(
             children: [
               _detailHeader(),
@@ -1189,7 +1190,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   _detailHeader() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10.0),
+      padding: const EdgeInsets.only(top: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -1234,6 +1235,7 @@ class TransactionDetails extends StatelessWidget {
     return Expanded(
       child: recentTranLog.isNotEmpty
           ? ListView.builder(
+              padding: const EdgeInsets.only(top: 8),
               itemCount: recentTranLog.length,
               itemBuilder: (BuildContext cxt, int x) {
                 return TweenAnimationBuilder<double>(
@@ -1309,6 +1311,17 @@ class TransactionDetails extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             )
+                          else if (recentTranLog[x]['serviceCode'] ==
+                              'spectranet')
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                image: const DecorationImage(
+                                    image: AssetImage("images/spectranet.png")),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            )
                           else if (recentTranLog[x]['serviceCode'] == 'smile')
                             Container(
                               height: 40,
@@ -1316,6 +1329,68 @@ class TransactionDetails extends StatelessWidget {
                               decoration: BoxDecoration(
                                 image: const DecorationImage(
                                     image: AssetImage("images/smile.png")),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            )
+                          else if (recentTranLog[x]['serviceCode'] ==
+                              'fiberone')
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                image: const DecorationImage(
+                                    image: AssetImage("images/fiberone.png")),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            )
+                          else if (recentTranLog[x]['serviceCode'] == 'dstv')
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                image: const DecorationImage(
+                                    image: AssetImage("images/dstv.png")),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            )
+                          else if (recentTranLog[x]['serviceCode'] == 'gotv')
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                image: const DecorationImage(
+                                    image: AssetImage("images/gotv.png")),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            )
+                          else if (recentTranLog[x]['serviceCode'] ==
+                              'startimes')
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                image: const DecorationImage(
+                                    image: AssetImage("images/startimes.png")),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            )
+                          else if (recentTranLog[x]['serviceCode'] == 'showmax')
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                image: const DecorationImage(
+                                    image: AssetImage("images/showmax.png")),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            )
+                          else
+                            Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                image: const DecorationImage(
+                                    image: AssetImage("images/no_image.png")),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             )

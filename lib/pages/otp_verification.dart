@@ -10,6 +10,7 @@ import 'package:flutter/scheduler.dart';
 // import 'package:flutter/scheduler.dart';
 // import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class OTPVerification extends StatefulWidget {
@@ -69,10 +70,7 @@ class _OTPVerificationState extends State<OTPVerification> {
     var response = await http
         .post(
             Uri.parse(
-                'http://192.168.43.50:8000/api/v1/main/api_re_generate_otp/'),
-            // Uri.parse(
-            //     'http://192.168.100.88:8000/api/v1/main/api_re_generate_otp/'),
-            // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_re_generate_otp/'),
+                '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_re_generate_otp/'),
             body: json.encode(data),
             headers: {
               "Content-Type": "application/json",
@@ -172,9 +170,7 @@ class _OTPVerificationState extends State<OTPVerification> {
     };
 
     var response = await http.post(
-        Uri.parse('http://192.168.43.50:8000/api/v1/main/api_confirm_otp/'),
-        // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_confirm_otp/'),
-        // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_confirm_otp/'),
+        Uri.parse('${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_confirm_otp/'),
         body: json.encode(data),
         headers: {
           "Content-Type": "application/json",
@@ -519,6 +515,7 @@ class _OTPVerificationState extends State<OTPVerification> {
                 Container(
                   width: 60.0,
                   child: MaterialButton(
+                    splashColor: ServiceProvider.redWarningColor,
                     height: 60.0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(60.0),

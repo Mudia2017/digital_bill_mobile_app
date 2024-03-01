@@ -7,6 +7,7 @@ import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -40,9 +41,7 @@ class _LoginState extends State<Login> {
     };
 
     var response = await http
-        .post(Uri.parse('http://192.168.43.50:8000/api/v1/main/api_login/'),
-            // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_login/'),
-            // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_login/'),
+        .post(Uri.parse('${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_login/'),
             body: json.encode(data),
             headers: {"Content-Type": "application/json"},
             encoding: Encoding.getByName("utf-8"))

@@ -20,6 +20,7 @@ import 'package:digital_mobile_bill/pages/login_with_pin.dart';
 import 'package:digital_mobile_bill/pages/notification.dart';
 import 'package:digital_mobile_bill/pages/otp_verification.dart';
 import 'package:digital_mobile_bill/pages/passwd_reset.dart';
+import 'package:digital_mobile_bill/pages/profile_photo.dart';
 import 'package:digital_mobile_bill/pages/referral_code.dart';
 import 'package:digital_mobile_bill/pages/register.dart';
 import 'package:digital_mobile_bill/pages/security_pin.dart';
@@ -64,6 +65,7 @@ class RouteManager {
   static const String authenticatePin = '/authenticatePin';
   static const String userAgreement = '/userAgreement';
   static const String referralCode = '/referralCode';
+  static const String profilePhoto = '/profilePhoto';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     var valuePassed = {};
@@ -280,6 +282,21 @@ class _GetXRouteState extends State<GetXRoute> {
         ),
         //
         GetPage(
+          name: RouteManager.profilePhoto,
+          page: () {
+            var _argumentData = Get.arguments;
+            return ProfilePhoto(
+              name: _argumentData['name'],
+              token: _argumentData['token'],
+              email: _argumentData['email'],
+              mobile: _argumentData['mobile'],
+            );
+          },
+          transition: Transition.fade,
+          transitionDuration: const Duration(seconds: 1),
+        ),
+        //
+        GetPage(
           name: RouteManager.homePage,
           page: () {
             var _argumentData = Get.arguments;
@@ -329,9 +346,7 @@ class _GetXRouteState extends State<GetXRoute> {
           name: RouteManager.dataPage,
           page: () {
             var _argumentData = Get.arguments;
-            return DataPage(
-                balance: _argumentData['balance'],
-                providerChoice: _argumentData['providerChoice']);
+            return DataPage(providerChoice: _argumentData['providerChoice']);
           },
           transition: Transition.zoom,
         ),
@@ -529,6 +544,7 @@ class _GetXRouteState extends State<GetXRoute> {
               subscriptionId: _argumentData['subscriptionId'],
               dataAmt: _argumentData['dataAmt'],
               isNumSetAsDefault: _argumentData['isNumSetAsDefault'],
+              serviceProvided: _argumentData['serviceProvided'],
             );
           },
           transition: Transition.fadeIn,

@@ -29,15 +29,60 @@ class _EditProfileState extends State<EditProfile> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController nameController = TextEditingController();
   TextEditingController mobileController = TextEditingController();
+  String mob = '';
 
   var maskFormatter = MaskTextInputFormatter(
-      mask: '#### ### ####',
-      filter: {"#": RegExp(r'[0-9]')},
-      type: MaskAutoCompletionType.lazy);
+    mask: '#### ### ####',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.eager,
+  );
 
   initialCall() {
+    // numFormat((widget.mobile));
     nameController.text = widget.name;
+
     mobileController.text = widget.mobile;
+  }
+
+  numFormat(val) {
+    // val.runes.forEach((int rune) {
+    //   var character = String.fromCharCode(rune);
+    //   print(character);
+    // });
+
+    // val.split('').forEach((ch) => print(ch));
+    int newVal = 0;
+    for (int i = 0; i < val.length; i++) {
+      var char = val[i];
+      if (val[i] == '0') {
+        newVal += int.parse(val[i]);
+      } else if (val[i] == '1') {
+        newVal += int.parse(' ${val[i]}');
+      } else if (val[i] == '2') {
+        newVal += int.parse(val[i]);
+      } else if (val[i] == '3') {
+        newVal += int.parse(' ${val[i]}');
+      } else {
+        newVal += int.parse(val[i]);
+      }
+      print(newVal);
+    }
+
+    // int newVal = 0;
+    // for (var x = 0; x < val.length; x++) {
+    //   if (val[x] < 4) {
+    //     newVal += int.parse(val[x]);
+    //   } else if (val[x] == 4) {
+    //     newVal += int.parse(' ${val[x]}');
+    //   } else if (val[x] < 7) {
+    //     newVal += int.parse(val[x]);
+    //   } else if (val[x] == 7) {
+    //     newVal += int.parse(' ${val[x]}');
+    //   } else {
+    //     newVal += int.parse(val[x]);
+    //   }
+    // }
+    // return newVal;
   }
 
   @override

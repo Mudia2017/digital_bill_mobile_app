@@ -256,6 +256,19 @@ class _HistoryState extends State<History> with TickerProviderStateMixin {
                                               ),
                                             )
                                           else if (transLog[x]['serviceCode'] ==
+                                              'spectranet')
+                                            Container(
+                                              height: 40,
+                                              width: 40,
+                                              decoration: BoxDecoration(
+                                                image: const DecorationImage(
+                                                    image: AssetImage(
+                                                        "images/spectranet.png")),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            )
+                                          else if (transLog[x]['serviceCode'] ==
                                               'smile')
                                             Container(
                                               height: 40,
@@ -264,6 +277,83 @@ class _HistoryState extends State<History> with TickerProviderStateMixin {
                                                 image: const DecorationImage(
                                                     image: AssetImage(
                                                         "images/smile.png")),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            )
+                                          else if (transLog[x]['serviceCode'] ==
+                                              'fiberone')
+                                            Container(
+                                              height: 40,
+                                              width: 40,
+                                              decoration: BoxDecoration(
+                                                image: const DecorationImage(
+                                                    image: AssetImage(
+                                                        "images/fiberone.png")),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            )
+                                          else if (transLog[x]['serviceCode'] ==
+                                              'dstv')
+                                            Container(
+                                              height: 40,
+                                              width: 40,
+                                              decoration: BoxDecoration(
+                                                image: const DecorationImage(
+                                                    image: AssetImage(
+                                                        "images/dstv.png")),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            )
+                                          else if (transLog[x]['serviceCode'] ==
+                                              'gotv')
+                                            Container(
+                                              height: 40,
+                                              width: 40,
+                                              decoration: BoxDecoration(
+                                                image: const DecorationImage(
+                                                    image: AssetImage(
+                                                        "images/gotv.png")),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            )
+                                          else if (transLog[x]['serviceCode'] ==
+                                              'startimes')
+                                            Container(
+                                              height: 40,
+                                              width: 40,
+                                              decoration: BoxDecoration(
+                                                image: const DecorationImage(
+                                                    image: AssetImage(
+                                                        "images/startimes.png")),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            )
+                                          else if (transLog[x]['serviceCode'] ==
+                                              'showmax')
+                                            Container(
+                                              height: 40,
+                                              width: 40,
+                                              decoration: BoxDecoration(
+                                                image: const DecorationImage(
+                                                    image: AssetImage(
+                                                        "images/showmax.png")),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            )
+                                          else
+                                            Container(
+                                              height: 40,
+                                              width: 40,
+                                              decoration: BoxDecoration(
+                                                image: const DecorationImage(
+                                                    image: AssetImage(
+                                                        "images/no_image.png")),
                                                 borderRadius:
                                                     BorderRadius.circular(10),
                                               ),

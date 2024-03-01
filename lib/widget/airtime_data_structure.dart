@@ -94,6 +94,11 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
         widget.call == 'internetServiceProvider') {
       mobileController.text = _data['internetNum'];
       isNumSetAsDefault = true;
+    } else if (_data['cableNum'] != '' &&
+        _data['cableNum'] != null &&
+        widget.call == 'cableTvServiceProvider') {
+      decoderController.text = _data['cableNum'];
+      isNumSetAsDefault = true;
     }
   }
 
@@ -245,7 +250,8 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
   @override
   Widget build(BuildContext context) {
     if (widget.call == 'dataServiceProvider' ||
-        widget.call == 'internetServiceProvider') {
+        widget.call == 'internetServiceProvider' ||
+        widget.call == 'cableTvServiceProvider') {
       _filterServiceProvider();
     } else if (widget.call == 'electricityServiceProvider') {
       providerCode = 'phcn';
@@ -322,6 +328,7 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                                       'cableTvServiceProvider') {
                                     providerChoice = 'dstv';
                                     isProviderSelected = true;
+                                    providerCode = 'dstv';
                                     debugPrint('DSTV SELECTED');
                                   } else if (widget.call ==
                                       'internetServiceProvider') {
@@ -479,6 +486,7 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                                   } else if (widget.call ==
                                       'cableTvServiceProvider') {
                                     providerChoice = 'gotv';
+                                    providerCode = 'gotv';
                                     isProviderSelected = true;
                                     debugPrint('GOTV SELECTED');
                                   } else if (widget.call ==
@@ -631,6 +639,7 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                                       'cableTvServiceProvider') {
                                     debugPrint('STARTIMES SELECTED');
                                     providerChoice = 'startimes';
+                                    providerCode = 'startimes';
                                     isProviderSelected = true;
                                   } else if (widget.call ==
                                       'internetServiceProvider') {
@@ -784,6 +793,7 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                                         'cableTvServiceProvider') {
                                       debugPrint('SHOWMAX SELECTED');
                                       providerChoice = 'showmax';
+                                      providerCode = 'showmax';
                                       isProviderSelected = true;
                                     }
                                     selectListVal = '';
@@ -923,10 +933,13 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                       widget.call == 'internetServiceProvider')
                     mobileNumber(),
 
+                  if (widget.call == 'cableTvServiceProvider') decoderNumber(),
+
                   if (widget.call == 'dataServiceProvider' ||
                       widget.call == 'airtimeServiceProvider' ||
                       widget.call == 'internetServiceProvider' ||
-                      widget.call == 'electricityServiceProvider')
+                      widget.call == 'electricityServiceProvider' ||
+                      widget.call == 'cableTvServiceProvider')
                     Row(
                       children: [
                         SizedBox(
@@ -957,58 +970,11 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                   ),
                   if (widget.call == 'dataServiceProvider' ||
                       widget.call == 'internetServiceProvider' ||
-                      widget.call == 'electricityServiceProvider')
+                      widget.call == 'electricityServiceProvider' ||
+                      widget.call == 'cableTvServiceProvider')
                     // DROP DOWN BUTTON LIST FOR SERVICE PROVIDER
-                    Container(
-                      height: 60,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          style: BorderStyle.solid,
-                          color: !isServiceProviderSelected
-                              ? Colors.redAccent.shade700
-                              : Colors.grey,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: OutlinedButton(
-                        onPressed: () {
-                          serviceList();
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            if (selectListVal == '')
-                              Text(
-                                'Select',
-                                style: ServiceProvider.contentFont,
-                              )
-                            else
-                              Flexible(
-                                child: Text(
-                                  selectListVal,
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            const Icon(
-                              Icons.keyboard_arrow_down,
-                              size: 30,
-                            ),
-                          ],
-                        ),
-                        style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all<Color>(
-                              themeManager.currentTheme == ThemeMode.light
-                                  ? Colors.white
-                                  : ServiceProvider.blueTrackColor),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    outlineDropdownListButton(),
+
                   if (!isServiceProviderSelected)
                     Container(
                       padding: const EdgeInsets.fromLTRB(15, 5, 0, 0),
@@ -1023,12 +989,14 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                       ),
                     ),
                   if (widget.call == 'dataServiceProvider' ||
-                      widget.call == 'internetServiceProvider')
+                      widget.call == 'internetServiceProvider' ||
+                      widget.call == 'cableTvServiceProvider')
                     SizedBox(
                       height: screenH * 0.06,
                     ),
                   if (widget.call == 'dataServiceProvider' ||
-                      widget.call == 'internetServiceProvider')
+                      widget.call == 'internetServiceProvider' ||
+                      widget.call == 'cableTvServiceProvider')
                     _amount(),
                   if (widget.call == 'dataServiceProvider')
                     SizedBox(
@@ -1047,8 +1015,6 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                         color: ServiceProvider.redWarningColor,
                       ),
                     ),
-
-                  if (widget.call == 'cableTvServiceProvider') decoderNumber(),
 
                   // RADIO BUTTON FOR PRE-PAID AND POST-PAID
                   if (widget.call == 'electricityServiceProvider')
@@ -1093,39 +1059,66 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                       ],
                     ),
 
-                  if (widget.call == 'cableTvServiceProvider')
-                    Row(
-                      children: [
-                        SizedBox(
-                          height: screenH * 0.06,
-                        ),
-                        Switch(
-                            inactiveTrackColor: Colors.grey,
-                            value: isNumSetAsDefault,
-                            onChanged: (val) {
-                              setState(() {
-                                isNumSetAsDefault = val;
-                              });
-                            }),
-                        SizedBox(
-                          width: screenW * 0.03,
-                        ),
-                        Text(
-                          'Set as default',
-                          style: GoogleFonts.sora().copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        )
-                      ],
-                    ),
-
                   SizedBox(
-                    height: screenH * 0.03,
+                    height: screenH * 0.06,
                   ),
 
                   standardBtn(),
                 ],
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget outlineDropdownListButton() {
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        border: Border.all(
+          style: BorderStyle.solid,
+          color: !isServiceProviderSelected
+              ? Colors.redAccent.shade700
+              : Colors.grey,
+        ),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: OutlinedButton(
+        onPressed: () {
+          serviceList();
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (selectListVal == '')
+              Text(
+                'Select',
+                style: ServiceProvider.contentFont,
+              )
+            else
+              Flexible(
+                child: Text(
+                  selectListVal,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 30,
+            ),
+          ],
+        ),
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.all<Color>(
+              themeManager.currentTheme == ThemeMode.light
+                  ? Colors.white
+                  : ServiceProvider.blueTrackColor),
+          shape: MaterialStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),
@@ -1502,6 +1495,7 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                                 'providerChoice': providerChoice,
                                 'pageInfo1': 'Kindly provide your 4 digit pin',
                                 'isNumSetAsDefault': isNumSetAsDefault,
+                                'serviceProvided': 'Airtime Purchase',
                               });
                         } else {
                           isResult = await serviceProvider.processTransaction(
@@ -1517,6 +1511,7 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                             '',
                             '',
                             isNumSetAsDefault,
+                            'Airtime Purchase',
                           );
                         }
                         if (isResult != null) {
@@ -1565,15 +1560,22 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                       isProviderSelected = false;
                     });
                   }
-                } else if (selectListVal == '' &&
-                    widget.call == 'cableTvServiceProvider') {
-                  if (providerChoice != '') {
+                } else if (widget.call == 'cableTvServiceProvider') {
+                  if (providerChoice == '') {
+                    setState(() {
+                      isProviderSelected = false;
+                    });
+                  } else if (selectListVal == '') {
+                    setState(() {
+                      isServiceProviderSelected = false;
+                    });
+                  } else {
                     print('CALLED2');
                     var inputResp =
                         await serviceProvider.popWarningConfirmActionYesNo(
                       context,
                       'Info',
-                      "Transaction Details:\nService provider: $providerChoice\nIUC No: ${decoderController.text}\nAmount: ${airtimeController.text}",
+                      "Transaction Details:\nService provider: $providerChoice\nIUC No: ${decoderController.text}\nPackage: $selectListVal\nAmount: $price",
                       Colors.grey,
                     );
                     if (inputResp != null && inputResp != false) {
@@ -1588,16 +1590,83 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                         iv. USER ACCOUNT IS ACTIVE
                       3.  CHECK THAT THE SUBSCRIPTION SELECTED IS ACTIVE
                       */
+                      if (double.parse(ServiceProvider.acctBal) >=
+                          (double.parse(price.replaceAll(',', '')))) {
+                        print('PROCEED...');
 
-                      print('PROCEED...');
+                        var isResult;
+                        if (ServiceProvider.isAuthorizeTrans) {
+                          isResult = await Navigator.of(context).pushNamed(
+                              RouteManager.authenticatePin,
+                              arguments: {
+                                'name': name,
+                                'email': email,
+                                'token': token,
+                                'call': 'cableTvServiceProvider',
+                                'pageTitle': 'Pin Authentication',
+                                'requestedAmt': price,
+                                'mobileTransNo': decoderController.text,
+                                'providerChoice': providerChoice,
+                                'subscriptionId': subscriptionId,
+                                'dataAmt': '',
+                                'pageInfo1': 'Kindly provide your 4 digit pin',
+                                'isNumSetAsDefault': isNumSetAsDefault,
+                                'serviceProvided': 'Cable TV Subscription',
+                              });
+                        } else {
+                          isResult = await serviceProvider.processTransaction(
+                            context,
+                            token,
+                            email,
+                            name,
+                            '',
+                            'cableTvServiceProvider',
+                            price,
+                            decoderController.text,
+                            providerChoice,
+                            subscriptionId,
+                            dataAmt,
+                            isNumSetAsDefault,
+                            'Cable TV Subscription',
+                          );
+                        }
+                        if (isResult != null) {
+                          if (isResult['isSuccess'] == true) {
+                            ServiceProvider.acctBal = isResult['closingBal'];
+                            if (isNumSetAsDefault) {
+                              await serviceProvider.saveDefaultDataNumToPref(
+                                  decoderController.text);
+                            } else {
+                              await serviceProvider
+                                  .saveDefaultDataNumToPref('');
+                            }
+
+                            decoderController.clear();
+                            price = '0';
+
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                                RouteManager.homePage,
+                                (Route<dynamic> route) => false,
+                                arguments: {
+                                  'token': token,
+                                  'name': name,
+                                  'email': email,
+                                  'mobile': mobile,
+                                  'acctBal': ServiceProvider.acctBal,
+                                });
+
+                            serviceProvider.showSuccessToast(
+                                context, 'Cable TV subscription successful');
+                          } else if (isResult['isSuccess'] == false) {
+                            serviceProvider.popWarningErrorMsg(context, 'Error',
+                                isResult['errorMsg'].toString());
+                          }
+                        }
+                      } else {
+                        serviceProvider.popWarningErrorMsg(context, 'Warning',
+                            'Insufficient amount to perform this transaction');
+                      }
                     }
-                    // setState(() {
-                    //   isServicePorviderSelected = true;
-                    // });
-                  } else {
-                    setState(() {
-                      isProviderSelected = false;
-                    });
                   }
                 } else if (widget.call == 'dataServiceProvider') {
                   if (providerCode == '') {
@@ -1649,6 +1718,7 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                                 'dataAmt': dataAmt,
                                 'pageInfo1': 'Kindly provide your 4 digit pin',
                                 'isNumSetAsDefault': isNumSetAsDefault,
+                                'serviceProvided': 'Data Purchase',
                               });
                         } else {
                           isResult = await serviceProvider.processTransaction(
@@ -1664,6 +1734,7 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                             subscriptionId,
                             dataAmt,
                             isNumSetAsDefault,
+                            'Data Purchase',
                           );
                         }
 
@@ -1751,6 +1822,7 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                                 'dataAmt': dataAmt,
                                 'pageInfo1': 'Kindly provide your 4 digit pin',
                                 'isNumSetAsDefault': isNumSetAsDefault,
+                                'serviceProvided': 'Internet Data Purchase',
                               });
                         } else {
                           isResult = await serviceProvider.processTransaction(
@@ -1766,6 +1838,7 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                             subscriptionId,
                             dataAmt,
                             isNumSetAsDefault,
+                            'Internet Data Purchase',
                           );
                         }
                         if (isResult != null) {

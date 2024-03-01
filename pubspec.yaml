@@ -51,6 +51,7 @@ dependencies:
   open_file: ^3.2.1
   flutter_paystack: ^1.0.5+1
   share: ^2.0.4
+  flutter_dotenv: ^5.1.0
 
   # flutter_progress_hud: ^2.0.2
   # open_file: ^3.2.1
@@ -60,6 +61,7 @@ dependencies:
   cupertino_icons: ^1.0.2
 
 dev_dependencies:
+  flutter_launcher_icons: "^0.11.0"
   flutter_test:
     sdk: flutter
 
@@ -69,6 +71,11 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^1.0.0
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "images/launchIcon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -100,6 +107,9 @@ flutter:
     - images/white_shopper_logo.png
     - images/debit_card.png
     - images/bank_house.png
+    - images/no_image.png
+    - images/launchIcon.png
+    - .env
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

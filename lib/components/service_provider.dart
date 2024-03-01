@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,6 +33,7 @@ class ServiceProvider extends ChangeNotifier {
   static Image? temporaryLocalImg;
   static String userAgreement = '';
   static String urReferralCode = '';
+  bool isBiometricVal = false;
 
   static Color idColor = const Color(0xFF9ca2ac);
   static Color backGroundColor = const Color.fromRGBO(230, 233, 235, 1);
@@ -896,12 +898,62 @@ class ServiceProvider extends ChangeNotifier {
     pref.remove('meterNum');
   }
 
-  Future getServiceProvider(String token) async {
+  uploadProfilePix(context, token, File imageFile) async {
+    var serverRes = '';
+    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+    hudLoadingEffect(context, true);
+
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse(
+          "${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_set_updateAcct/"),
+    );
+    Map<String, String> headers = {
+      "Authorization": "Token $token",
+      "Content-type": "multipart/form-data"
+    };
+    if (imageFile.path != '') {
+      request.files.add(
+        http.MultipartFile(
+          'image',
+          imageFile.readAsBytes().asStream(),
+          imageFile.lengthSync(),
+
+          filename: imageFile.path.split('/').last,
+          // contentType: MediaType('image','jpeg'),
+        ),
+      );
+    }
+
+    request.headers.addAll(headers);
+
+    var response = await request.send();
+
+    if (response.statusCode == 200) {
+      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+      hudLoadingEffect(context, false);
+      serverRes = await response.stream.bytesToString();
+
+      print(serverRes);
+      // var serverResponse = json.decode(response);
+      //   serverReply = serverResponse;
+    } else {
+      serverRes = await response.stream.bytesToString();
+      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+      hudLoadingEffect(context, false);
+      print(serverRes);
+    }
+
+    return serverRes;
+  }
+
+  Future getServiceProvider(context, String token) async {
+    // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
+    hudLoadingEffect(context, true);
     var serverResponse;
     var response = await http.get(
-      Uri.parse('http://192.168.43.50:8000/api/v1/main/api_dataSubscription/'),
-      // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_dataSubscription/'),
-      // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_dataSubscription/'),
+      Uri.parse(
+          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_dataSubscription/'),
       // body: json.encode(),
       headers: {
         "Content-Type": "application/json",
@@ -913,6 +965,8 @@ class ServiceProvider extends ChangeNotifier {
     if (response.statusCode == 200) {
       serverResponse = json.decode(response.body);
     }
+    // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+    hudLoadingEffect(context, false);
     return serverResponse;
   }
 
@@ -920,9 +974,7 @@ class ServiceProvider extends ChangeNotifier {
   Future signOutAcct(String token) async {
     var serverResponse;
     var response = await http.post(
-      Uri.parse('http://192.168.43.50:8000/api/v1/main/api_logoutUser/'),
-      // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_logoutUser/'),
-      // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_logoutUser/'),
+      Uri.parse('${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_logoutUser/'),
       // body: json.encode(),
       headers: {
         "Content-Type": "application/json",
@@ -941,9 +993,8 @@ class ServiceProvider extends ChangeNotifier {
   Future acctProfile(String token) async {
     var serverResponse = {};
     var response = await http.post(
-      Uri.parse('http://192.168.43.50:8000/api/v1/main/api_getProfileInfo/'),
-      // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_getProfileInfo/'),
-      // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_getProfileInfo/'),
+      Uri.parse(
+          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_getProfileInfo/'),
       // body: json.encode(),
       headers: {
         "Content-Type": "application/json",
@@ -977,10 +1028,7 @@ class ServiceProvider extends ChangeNotifier {
     var response = await http
         .post(
           Uri.parse(
-              'http://192.168.43.50:8000/api/v1/main/api_set_updateAcct/'),
-          // Uri.parse(
-          //     'http://192.168.100.88:8000/api/v1/main/api_set_updateAcct/'),
-          // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_set_updateAcct/'),
+              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_set_updateAcct/'),
           // body: json.encode(),
           headers: {
             "Content-Type": "application/json",
@@ -1023,9 +1071,8 @@ class ServiceProvider extends ChangeNotifier {
 
     var response = await http
         .post(
-            Uri.parse('http://192.168.43.50:8000/api/v1/main/api_secure_pin/'),
-            // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_secure_pin/'),
-            // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_secure_pin/'),
+            Uri.parse(
+                '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_secure_pin/'),
             body: json.encode(data),
             headers: {
               "Content-Type": "application/json",
@@ -1064,9 +1111,8 @@ class ServiceProvider extends ChangeNotifier {
       'userName': name,
     };
     var response = await http.post(
-      Uri.parse('http://192.168.43.50:8000/api/v1/main/api_changePassword/'),
-      // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_changePassword/'),
-      // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_changePassword/'),
+      Uri.parse(
+          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_changePassword/'),
       body: jsonEncode(data),
       headers: {
         "Content-Type": "application/json",
@@ -1099,10 +1145,8 @@ class ServiceProvider extends ChangeNotifier {
       'email': email,
     };
     var response = await http.post(
-      Uri.parse('http://192.168.43.50:8000/api/v1/main/api_deactivateAccount/'),
-      // Uri.parse(
-      //     'http://192.168.100.88:8000/api/v1/main/api_deactivateAccount/'),
-      // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_deactivateAccount/'),
+      Uri.parse(
+          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_deactivateAccount/'),
       body: jsonEncode(data),
       headers: {
         "Content-Type": "application/json",
@@ -1125,15 +1169,16 @@ class ServiceProvider extends ChangeNotifier {
     return serverResp;
   }
 
-  Future sendEmail(context, name, subject, emailBody) async {
+  Future sendEmail(
+      context, name, subject, emailBody, userEmail, userPhoneNo) async {
     // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
     hudLoadingEffect(context, true);
     Map serverResp = {};
     try {
-      final url = Uri.parse("https://api.emailjs.com/api/v1.0/email/send");
-      var serviceId = 'service_8nivyd8';
-      var templateId = 'template_2a1kv1h';
-      var userId = 'C12pPOURw70lG3sZY';
+      final url = Uri.parse("${dotenv.env['EMAIL_URL']}");
+      var serviceId = "${dotenv.env['SERVICE_ID']}";
+      var templateId = "${dotenv.env['TEMPLATE_ID']}";
+      var userId = "${dotenv.env['USER_ID']}";
       final response = await http
           .post(
             url,
@@ -1145,8 +1190,9 @@ class ServiceProvider extends ChangeNotifier {
               "template_params": {
                 "to_name": name,
                 "subject": subject,
-                "message": emailBody,
-                // "user_email": 'oskienterprises@gmail.com',
+                "message":
+                    '$emailBody Customer Email & Phone No: $userEmail & $userPhoneNo',
+                "reply_to": "${dotenv.env['REPLY_TO']}"
               }
             }),
           )
@@ -1182,10 +1228,7 @@ class ServiceProvider extends ChangeNotifier {
     var response = await http
         .post(
           Uri.parse(
-              'http://192.168.43.50:8000/api/v1/main/api_authenticateWithBiometrics/'),
-          // Uri.parse(
-          //     'http://192.168.100.88:8000/api/v1/main/api_authenticateWithBiometrics/'),
-          // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_authenticateWithBiometrics/'),
+              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_authenticateWithBiometrics/'),
           body: jsonEncode(data),
           headers: {
             "Content-Type": "application/json",
@@ -1222,7 +1265,8 @@ class ServiceProvider extends ChangeNotifier {
       providerChoice,
       subscriptionId,
       dataAmt,
-      isNumSetAsDefault) async {
+      isNumSetAsDefault,
+      serviceProvided) async {
     // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
     hudLoadingEffect(context, true);
     Map serverResp = {};
@@ -1237,14 +1281,12 @@ class ServiceProvider extends ChangeNotifier {
       'subscriptionId': subscriptionId,
       'dataAmt': dataAmt,
       'isNumSetAsDefault': isNumSetAsDefault,
+      'serviceProvided': serviceProvided,
     };
     var response = await http
         .post(
           Uri.parse(
-              'http://192.168.43.50:8000/api/v1/main/api_processTransaction/'),
-          // Uri.parse(
-          //     'http://192.168.100.88:8000/api/v1/main/api_processTransaction/'),
-          // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_processTransaction/'),
+              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_processTransaction/'),
           body: jsonEncode(data),
           headers: {
             "Content-Type": "application/json",
@@ -1275,9 +1317,7 @@ class ServiceProvider extends ChangeNotifier {
     var serverResponse = {};
     var response = await http.post(
       Uri.parse(
-          'http://192.168.43.50:8000/api/v1/main/api_acctTransactionLog/'),
-      // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_acctTransactionLog/'),
-      // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_acctTransactionLog/'),
+          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_acctTransactionLog/'),
       // body: json.encode(),
       headers: {
         "Content-Type": "application/json",
@@ -1308,10 +1348,7 @@ class ServiceProvider extends ChangeNotifier {
     };
     var serverResponse = {};
     var response = await http.post(
-      Uri.parse('http://192.168.43.50:8000/api/v1/main/api_acctStatement/'),
-      // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_acctStatement/'),
-      // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_acctStatement/'),
-
+      Uri.parse('${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_acctStatement/'),
       body: jsonEncode(data),
       headers: {
         "Content-Type": "application/json",
@@ -1335,10 +1372,8 @@ class ServiceProvider extends ChangeNotifier {
 
     var serverResponse = {};
     var response = await http.post(
-      Uri.parse('http://192.168.43.50:8000/api/v1/main/api_creditCusWallet/'),
-      // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_creditCusWallet/'),
-      // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_creditCusWallet/'),
-
+      Uri.parse(
+          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_creditCusWallet/'),
       body: jsonEncode(record),
       headers: {
         "Content-Type": "application/json",
@@ -1367,10 +1402,7 @@ class ServiceProvider extends ChangeNotifier {
     };
     var serverResponse = {};
     var response = await http.post(
-      Uri.parse('http://192.168.43.50:8000/api/v1/main/api_referrals/'),
-      // Uri.parse('http://192.168.100.88:8000/api/v1/main/api_referrals/'),
-      // Uri.parse('http://127.0.0.1:8000/api/v1/main/api_referrals/'),
-
+      Uri.parse('${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_referrals/'),
       body: jsonEncode(data),
       headers: {
         "Content-Type": "application/json",
@@ -1409,7 +1441,7 @@ class KeyboardNumber extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: MaterialButton(
-        splashColor: ServiceProvider.redWarningColor,
+        splashColor: ServiceProvider.skyBlue,
         highlightColor: themeManager.currentTheme == ThemeMode.light
             ? Colors.blue
             : ServiceProvider.blueTrackColor,

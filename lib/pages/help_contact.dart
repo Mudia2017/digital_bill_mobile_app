@@ -77,137 +77,156 @@ class _HelpContactState extends State<HelpContact> {
             SizedBox(
               height: screenH * 0.009,
             ),
-            InkWell(
-              child: listTileStructure('Transfer not reflecting in wallet',
-                  'Transfer was made but not is not reflecting in my wallet'),
-              onTap: () {
-                Navigator.of(context)
-                    .pushNamed(RouteManager.contact, arguments: {
-                  'name': widget.name,
-                  'email': widget.email,
-                  'token': widget.token,
-                  'mobile': widget.mobile,
-                  'subject': 'Transfer not reflecting in wallet',
-                });
-              },
-            ),
             Divider(
               color: themeManager.currentTheme == ThemeMode.light
-                  ? Colors.black
-                  : Colors.white24,
+                  ? Colors.black38
+                  : Colors.white38,
+              height: 0,
             ),
-            InkWell(
-              child: listTileStructure('Debited without data',
-                  'I was debited but the did not get the data'),
-              onTap: () {
-                Navigator.of(context)
-                    .pushNamed(RouteManager.contact, arguments: {
-                  'name': widget.name,
-                  'email': widget.email,
-                  'token': widget.token,
-                  'mobile': widget.mobile,
-                  'subject': 'Debited without data',
-                });
-              },
-            ),
-            Divider(
-              color: themeManager.currentTheme == ThemeMode.light
-                  ? Colors.black
-                  : Colors.white24,
-            ),
-            InkWell(
-              child: listTileStructure('Debited without airtime',
-                  'I was debited but the did not get the airtime'),
-              onTap: () {
-                Navigator.of(context)
-                    .pushNamed(RouteManager.contact, arguments: {
-                  'name': widget.name,
-                  'email': widget.email,
-                  'token': widget.token,
-                  'mobile': widget.mobile,
-                  'subject': 'Debited without airtime',
-                });
-              },
-            ),
-            Divider(
-              color: themeManager.currentTheme == ThemeMode.light
-                  ? Colors.black
-                  : Colors.white24,
-            ),
-            InkWell(
-              child: listTileStructure('Issue with cable TV subscription',
-                  'Any issue related to cable TV?'),
-              onTap: () {
-                Navigator.of(context)
-                    .pushNamed(RouteManager.contact, arguments: {
-                  'name': widget.name,
-                  'email': widget.email,
-                  'token': widget.token,
-                  'mobile': widget.mobile,
-                  'subject': 'Issue with cable TV subscription',
-                });
-              },
-            ),
-            Divider(
-              color: themeManager.currentTheme == ThemeMode.light
-                  ? Colors.black
-                  : Colors.white24,
-            ),
-            InkWell(
-              child: listTileStructure('Internet subscription issue',
-                  'Any issue related to Internet subscription'),
-              onTap: () {
-                Navigator.of(context)
-                    .pushNamed(RouteManager.contact, arguments: {
-                  'name': widget.name,
-                  'email': widget.email,
-                  'token': widget.token,
-                  'mobile': widget.mobile,
-                  'subject': 'Internet subscription issue',
-                });
-              },
-            ),
-            Divider(
-              color: themeManager.currentTheme == ThemeMode.light
-                  ? Colors.black
-                  : Colors.white24,
-            ),
-            InkWell(
-              child: listTileStructure(
-                  'Electricity', 'Any issue related to Electricity bill'),
-              onTap: () {
-                Navigator.of(context)
-                    .pushNamed(RouteManager.contact, arguments: {
-                  'name': widget.name,
-                  'email': widget.email,
-                  'token': widget.token,
-                  'mobile': widget.mobile,
-                  'subject': 'Electricity',
-                });
-              },
-            ),
-            Divider(
-              color: themeManager.currentTheme == ThemeMode.light
-                  ? Colors.black
-                  : Colors.white24,
-            ),
-            InkWell(
-              child: listTileStructure('Others', 'Having any general issue?'),
-              onTap: () {
-                Navigator.of(context)
-                    .pushNamed(RouteManager.contact, arguments: {
-                  'name': widget.name,
-                  'email': widget.email,
-                  'token': widget.token,
-                  'mobile': widget.mobile,
-                  'subject': 'Others',
-                });
-              },
-            ),
-            Divider(
-              color: themeManager.currentTheme == ThemeMode.light
-                  ? Colors.black
-                  : Colors.white24,
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    InkWell(
+                      child: listTileStructure(
+                          'Transfer not reflecting in wallet',
+                          'Transfer was made but not is not reflecting in my wallet'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.contact, arguments: {
+                          'name': widget.name,
+                          'email': widget.email,
+                          'token': widget.token,
+                          'mobile': widget.mobile,
+                          'subject': 'Transfer not reflecting in wallet',
+                        });
+                      },
+                    ),
+                    Divider(
+                      color: themeManager.currentTheme == ThemeMode.light
+                          ? Colors.black
+                          : Colors.white24,
+                    ),
+                    InkWell(
+                      child: listTileStructure('Debited without data',
+                          'I was debited but the did not get the data'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.contact, arguments: {
+                          'name': widget.name,
+                          'email': widget.email,
+                          'token': widget.token,
+                          'mobile': widget.mobile,
+                          'subject': 'Debited without data',
+                        });
+                      },
+                    ),
+                    Divider(
+                      color: themeManager.currentTheme == ThemeMode.light
+                          ? Colors.black
+                          : Colors.white24,
+                    ),
+                    InkWell(
+                      child: listTileStructure('Debited without airtime',
+                          'I was debited but the did not get the airtime'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.contact, arguments: {
+                          'name': widget.name,
+                          'email': widget.email,
+                          'token': widget.token,
+                          'mobile': widget.mobile,
+                          'subject': 'Debited without airtime',
+                        });
+                      },
+                    ),
+                    Divider(
+                      color: themeManager.currentTheme == ThemeMode.light
+                          ? Colors.black
+                          : Colors.white24,
+                    ),
+                    InkWell(
+                      child: listTileStructure(
+                          'Issue with cable TV subscription',
+                          'Any issue related to cable TV?'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.contact, arguments: {
+                          'name': widget.name,
+                          'email': widget.email,
+                          'token': widget.token,
+                          'mobile': widget.mobile,
+                          'subject': 'Issue with cable TV subscription',
+                        });
+                      },
+                    ),
+                    Divider(
+                      color: themeManager.currentTheme == ThemeMode.light
+                          ? Colors.black
+                          : Colors.white24,
+                    ),
+                    InkWell(
+                      child: listTileStructure('Internet subscription issue',
+                          'Any issue related to Internet subscription'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.contact, arguments: {
+                          'name': widget.name,
+                          'email': widget.email,
+                          'token': widget.token,
+                          'mobile': widget.mobile,
+                          'subject': 'Internet subscription issue',
+                        });
+                      },
+                    ),
+                    Divider(
+                      color: themeManager.currentTheme == ThemeMode.light
+                          ? Colors.black
+                          : Colors.white24,
+                    ),
+                    InkWell(
+                      child: listTileStructure('Electricity',
+                          'Any issue related to Electricity bill'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.contact, arguments: {
+                          'name': widget.name,
+                          'email': widget.email,
+                          'token': widget.token,
+                          'mobile': widget.mobile,
+                          'subject': 'Electricity',
+                        });
+                      },
+                    ),
+                    Divider(
+                      color: themeManager.currentTheme == ThemeMode.light
+                          ? Colors.black
+                          : Colors.white24,
+                    ),
+                    InkWell(
+                      child: listTileStructure(
+                          'Others', 'Having any general issue?'),
+                      onTap: () {
+                        Navigator.of(context)
+                            .pushNamed(RouteManager.contact, arguments: {
+                          'name': widget.name,
+                          'email': widget.email,
+                          'token': widget.token,
+                          'mobile': widget.mobile,
+                          'subject': 'Others',
+                        });
+                      },
+                    ),
+                    Divider(
+                      color: themeManager.currentTheme == ThemeMode.light
+                          ? Colors.black
+                          : Colors.white24,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

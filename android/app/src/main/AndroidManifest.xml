@@ -2,9 +2,10 @@
     package="com.example.digital_mobile_bill">
 
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <uses-permission android:name="android.permission.INTERNET" />
     
    <application
-        android:label="digital_mobile_bill"
+        android:label="Digital Bill"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

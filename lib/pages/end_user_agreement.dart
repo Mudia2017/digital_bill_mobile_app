@@ -51,6 +51,12 @@ class EndUserAgreement extends StatelessWidget {
                 ],
               ),
             ),
+            Divider(
+              color: themeManager.currentTheme == ThemeMode.light
+                  ? Colors.black38
+                  : Colors.white38,
+              height: 0,
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(8, 0, 8, 15),

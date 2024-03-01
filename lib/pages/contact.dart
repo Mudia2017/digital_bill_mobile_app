@@ -236,7 +236,9 @@ class _ContactState extends State<Contact> {
                                 context,
                                 widget.name,
                                 widget.subject,
-                                emailBodyController.text);
+                                emailBodyController.text,
+                                widget.email,
+                                widget.mobile);
                             if (resp['statusCode'] == 200) {
                               emailBodyController.clear();
                               serviceProvider.showSuccessToast(

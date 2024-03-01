@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -219,7 +220,7 @@ class _ReferralCodeState extends State<ReferralCode>
                       child: Column(
                         children: [
                           TweenAnimationBuilder<double>(
-                            tween: Tween(begin: 1.0, end: 0.0),
+                            tween: Tween(begin: -1.0, end: 0.0),
                             curve: Curves.easeInOut,
                             duration: const Duration(seconds: 1),
                             child: ListTile(
@@ -384,7 +385,7 @@ class _ReferralCodeState extends State<ReferralCode>
                         leading: Stack(
                           children: [
                             if (referrals[x]['profileImg'] !=
-                                'http://192.168.43.50:8000')
+                                dotenv.env['URL_ENDPOINT'])
                               CircleAvatar(
                                 radius: 30,
                                 backgroundImage:

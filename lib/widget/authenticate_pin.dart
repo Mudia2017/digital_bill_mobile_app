@@ -18,6 +18,7 @@ class AuthenticatePin extends StatefulWidget {
       subscriptionId,
       dataAmt;
   bool? isNumSetAsDefault;
+  String? serviceProvided;
 
   AuthenticatePin({
     Key? key,
@@ -35,6 +36,7 @@ class AuthenticatePin extends StatefulWidget {
     this.subscriptionId,
     this.dataAmt,
     this.isNumSetAsDefault,
+    this.serviceProvided,
   }) : super(key: key);
 
   @override
@@ -348,6 +350,7 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
                 Container(
                   width: 60.0,
                   child: MaterialButton(
+                    splashColor: ServiceProvider.redWarningColor,
                     highlightColor: Colors.blue,
                     height: 60.0,
                     shape: RoundedRectangleBorder(
@@ -435,6 +438,7 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
         widget.subscriptionId,
         widget.dataAmt,
         widget.isNumSetAsDefault,
+        widget.serviceProvided,
       );
 
       if (resp['isSuccess'] == true) {

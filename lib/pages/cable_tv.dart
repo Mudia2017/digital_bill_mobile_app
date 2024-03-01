@@ -14,6 +14,59 @@ class CableTV extends StatefulWidget {
 }
 
 class _CableTVState extends State<CableTV> {
+  Map userProfile = {};
+  List allDataSubList = [];
+  List filteredData = [];
+  String providerCode = '';
+
+  @override
+  void initState() {
+    _getDataUser();
+    super.initState();
+  }
+
+  _getDataUser() async {
+    var serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
+    userProfile = await serviceProvider.getUserInfo();
+
+    if (userProfile['token'] == '' || userProfile['token'] == 'null') {
+      serviceProvider.logOutUser();
+      serviceProvider.authenticateUser(
+          context, userProfile['name'], userProfile['email']);
+    } else {
+      await getDataSub();
+    }
+  }
+
+  getDataSub() async {
+    var serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
+    var serverResponse =
+        await serviceProvider.getServiceProvider(context, userProfile['token']);
+    if (serverResponse['isSuccess'] == false) {
+      if (serverResponse['errorMsg'] != '') {
+        serviceProvider.popWarningErrorMsg(
+            context, 'Error', serverResponse['errorMsg'].toString());
+      }
+    } else {
+      setState(() {
+        filteredData = allDataSubList = serverResponse['dataSubList'];
+        _filterServiceProvider();
+      });
+    }
+  }
+
+  _filterServiceProvider() {
+    if (providerCode != '') {
+      setState(() {
+        filteredData = allDataSubList
+            .where((element) =>
+                element['code'].contains(providerCode) ||
+                element['code'].contains('select'))
+            .toList();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var serviceProvider = Provider.of<ServiceProvider>(context);
@@ -82,6 +135,7 @@ class _CableTVState extends State<CableTV> {
                 providerChoice: widget.providerChoice,
                 serviceName: widget.providerChoice,
                 pageName: 'Cable TV Service Provider',
+                allDataSubList: allDataSubList,
               ),
             ],
           ),

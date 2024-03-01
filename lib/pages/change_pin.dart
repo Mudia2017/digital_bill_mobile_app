@@ -1,6 +1,7 @@
 import 'package:digital_mobile_bill/components/service_provider.dart';
 import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -196,7 +197,8 @@ class _ChangePinState extends State<ChangePin> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          if (ServiceProvider.profileImgFrmServer != '')
+          if (ServiceProvider.profileImgFrmServer != '' &&
+              ServiceProvider.profileImgFrmServer != dotenv.env['URL_ENDPOINT'])
             CircleAvatar(
                 radius: 30,
                 backgroundImage:
@@ -208,44 +210,43 @@ class _ChangePinState extends State<ChangePin> {
             )
           else
             CircleAvatar(
-                radius: 30,
-                backgroundColor: ServiceProvider.lightgray2,
-                child: Icon(
-                  Icons.person,
-                  size: 60,
-                  color: Colors.grey.shade600,
-                ))
-
-          // if (widget.prefImage != null)
-          //   CircleAvatar(
-          //     radius: 30,
-          //     backgroundImage: (widget.prefImage.image),
-          //   )
-          // else
-          //   CircleAvatar(
-          //       radius: 30,
-          //       backgroundColor: ServiceProvider.lightgray2,
-          //       child: Icon(
-          //         Icons.person,
-          //         size: 60,
-          //         color: Colors.grey.shade600,
-          //       ))
+              radius: 30,
+              backgroundColor: ServiceProvider.lightgray2,
+              child: Icon(
+                Icons.person,
+                size: 60,
+                color: Colors.grey.shade600,
+              ),
+            )
         ],
       ),
     );
   }
 
   Widget getName() {
-    return Container(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text(
-            '${widget.name}',
-            style: ServiceProvider.greetUserFont1,
-          )
-        ],
-      ),
+    double screenW = MediaQuery.of(context).size.width;
+    return Row(
+      children: [
+        Expanded(child: Container()),
+        Container(
+          padding: const EdgeInsets.only(right: 13),
+          width: screenW * 0.7,
+          child: Text(
+            widget.name,
+            style: GoogleFonts.sarabun(
+              fontWeight: FontWeight.w200,
+            ).copyWith(
+                fontSize: 18,
+                fontStyle: FontStyle.italic,
+                color: themeManager.currentTheme == ThemeMode.light
+                    ? Colors.black87
+                    : Colors.grey),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+          ),
+        ),
+      ],
     );
   }
 
@@ -353,6 +354,7 @@ class _ChangePinState extends State<ChangePin> {
                 Container(
                   width: 60.0,
                   child: MaterialButton(
+                    splashColor: ServiceProvider.redWarningColor,
                     highlightColor: Colors.blue,
                     height: 60.0,
                     shape: RoundedRectangleBorder(

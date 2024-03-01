@@ -2,6 +2,7 @@ import 'package:digital_mobile_bill/components/service_provider.dart';
 import 'package:digital_mobile_bill/route/route.dart';
 import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -51,7 +52,7 @@ class _DeleteAccountPasswordState extends State<DeleteAccountPassword> {
                     height: screenH * 0.023,
                   ),
                   Container(
-                    padding: const EdgeInsets.fromLTRB(30, 35, 30, 15),
+                    padding: const EdgeInsets.fromLTRB(30, 35, 13, 0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -81,9 +82,63 @@ class _DeleteAccountPasswordState extends State<DeleteAccountPassword> {
                           'Delete Acct',
                           style: ServiceProvider.pageNameFont,
                         ),
-                        Container(),
+                        Container(
+                          margin: const EdgeInsets.only(left: 10.0),
+                          child: Column(
+                            children: [
+                              if (ServiceProvider.profileImgFrmServer != '' &&
+                                  ServiceProvider.profileImgFrmServer !=
+                                      dotenv.env['URL_ENDPOINT'])
+                                CircleAvatar(
+                                    radius: 30,
+                                    backgroundImage: NetworkImage(
+                                        ServiceProvider.profileImgFrmServer))
+                              else if (ServiceProvider.temporaryLocalImg !=
+                                  null)
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundImage: (ServiceProvider
+                                      .temporaryLocalImg!.image),
+                                )
+                              else
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundColor: ServiceProvider.lightgray2,
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(child: Container()),
+                      Container(
+                        padding: const EdgeInsets.only(right: 13),
+                        width: screenW * 0.7,
+                        child: Text(
+                          widget.name,
+                          style: GoogleFonts.sarabun(
+                            fontWeight: FontWeight.w200,
+                          ).copyWith(
+                              fontSize: 18,
+                              fontStyle: FontStyle.italic,
+                              color:
+                                  themeManager.currentTheme == ThemeMode.light
+                                      ? Colors.black87
+                                      : Colors.grey),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.end,
+                        ),
+                      ),
+                    ],
                   ),
                   pageContentStructure(),
                 ],

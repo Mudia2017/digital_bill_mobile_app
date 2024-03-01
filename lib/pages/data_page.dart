@@ -12,10 +12,8 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 
 class DataPage extends StatefulWidget {
-  final String balance;
   final String? providerChoice;
-  const DataPage({Key? key, required this.balance, this.providerChoice})
-      : super(key: key);
+  const DataPage({Key? key, this.providerChoice}) : super(key: key);
 
   @override
   _DataPageState createState() => _DataPageState();
@@ -46,7 +44,7 @@ class _DataPageState extends State<DataPage> {
   getDataSub() async {
     var serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
     var serverResponse =
-        await serviceProvider.getServiceProvider(userProfile['token']);
+        await serviceProvider.getServiceProvider(context, userProfile['token']);
     if (serverResponse['isSuccess'] == false) {
       if (serverResponse['errorMsg'] != '') {
         serviceProvider.popWarningErrorMsg(
