@@ -74,8 +74,8 @@ class _FlashLogoState extends State<FlashLogo>
         child: ScaleTransition(
           scale: _animationController,
           child: Container(
-            margin: const EdgeInsets.only(top: 10),
-            width: 50,
+            margin: const EdgeInsets.only(top: 10, left: 25, right: 25),
+            width: MediaQuery.of(context).size.width / 11,
             height: 40,
             decoration: BoxDecoration(
               image: DecorationImage(

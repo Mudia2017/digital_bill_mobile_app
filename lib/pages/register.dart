@@ -8,7 +8,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:provider/provider.dart';
 
 class Register extends StatefulWidget {
   const Register({Key? key}) : super(key: key);
@@ -176,7 +178,6 @@ class _RegisterState extends State<Register> {
       // backgroundColor: ServiceProvider.backGroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
           physics: const BouncingScrollPhysics(),
           child: GestureDetector(
             onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
@@ -184,6 +185,11 @@ class _RegisterState extends State<Register> {
               key: _formKey,
               child: Column(
                 children: [
+                  Visibility(
+                    child: serviceProvider.noInternetConnectionBadge(context),
+                    visible: Provider.of<InternetConnectionStatus>(context) ==
+                        InternetConnectionStatus.disconnected,
+                  ),
                   Container(
                     padding: const EdgeInsets.fromLTRB(30, 35, 30, 15),
                     child: Row(
@@ -222,174 +228,201 @@ class _RegisterState extends State<Register> {
                   SizedBox(
                     height: screenH * 0.009,
                   ),
-                  Text(
-                    "Hi, let's guide you throught the process as a new user by filling the registration form.",
-                    style: GoogleFonts.overlock().copyWith(
-                      color: Colors.grey,
-                      fontSize: 22,
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.w100,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: Text(
+                      "Hi, let's guide you throught the process as a new user by filling the registration form.",
+                      style: GoogleFonts.overlock().copyWith(
+                        color: Colors.grey,
+                        fontSize: 22,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w100,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  Text(
-                    "Note: OTP code will be sent to the email supplied",
-                    style: GoogleFonts.overlock().copyWith(
-                      color: ServiceProvider.redWarningColor,
-                      fontSize: 18,
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.w100,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: Text(
+                      "Note: OTP code will be sent to the email supplied",
+                      style: GoogleFonts.overlock().copyWith(
+                        color: ServiceProvider.redWarningColor,
+                        fontSize: 18,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w100,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   const SizedBox(
                     height: 30,
                   ),
-                  TextFormField(
-                    keyboardType: TextInputType.name,
-                    controller: nameController,
-                    style: Theme.of(context).textTheme.subtitle2,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: TextFormField(
+                      keyboardType: TextInputType.name,
+                      controller: nameController,
+                      style: Theme.of(context).textTheme.subtitle2,
+                      decoration: const InputDecoration(
+                        labelText: 'Name',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Name is required';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Name is required';
-                      }
-                      return null;
-                    },
                   ),
                   const SizedBox(
                     height: 15,
                   ),
-                  TextFormField(
-                    keyboardType: TextInputType.emailAddress,
-                    controller: emailController,
-                    style: Theme.of(context).textTheme.subtitle2,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Email is required';
-                      }
-                      return null;
-                    },
-                    onChanged: (value) {
-                      if (value.isNotEmpty && value.contains('@')) {
-                        setState(() {
-                          emailController.text;
-                        });
-                      } else if (!value.contains('@')) {
-                        setState(() {
-                          emailController.text;
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  TextFormField(
-                    keyboardType: TextInputType.phone,
-                    controller: mobileController,
-                    style: Theme.of(context).textTheme.subtitle2,
-                    inputFormatters: [maskFormatter],
-                    decoration: const InputDecoration(
-                      labelText: 'Mobile No',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Mobile number is required';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  TextFormField(
-                    keyboardType: TextInputType.visiblePassword,
-                    controller: password1Controller,
-                    style: Theme.of(context).textTheme.subtitle2,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      suffixIcon: GestureDetector(
-                        onTap: () {
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: TextFormField(
+                      keyboardType: TextInputType.emailAddress,
+                      controller: emailController,
+                      style: Theme.of(context).textTheme.subtitle2,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Email is required';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        if (value.isNotEmpty && value.contains('@')) {
                           setState(() {
-                            hidePassword = !hidePassword;
+                            emailController.text;
                           });
-                        },
-                        child: Icon(
-                          hidePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
+                        } else if (!value.contains('@')) {
+                          setState(() {
+                            emailController.text;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: TextFormField(
+                      keyboardType: TextInputType.phone,
+                      controller: mobileController,
+                      style: Theme.of(context).textTheme.subtitle2,
+                      inputFormatters: [maskFormatter],
+                      decoration: const InputDecoration(
+                        labelText: 'Mobile No',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Mobile number is required';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: TextFormField(
+                      keyboardType: TextInputType.visiblePassword,
+                      controller: password1Controller,
+                      style: Theme.of(context).textTheme.subtitle2,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        suffixIcon: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              hidePassword = !hidePassword;
+                            });
+                          },
+                          child: Icon(
+                            hidePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: themeManager.currentTheme == ThemeMode.light
+                                ? Colors.black
+                                : ServiceProvider.whiteColorShade70,
+                          ),
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password is required';
+                        }
+                        return null;
+                      },
+                      obscureText: hidePassword,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password is required';
-                      }
-                      return null;
-                    },
-                    obscureText: hidePassword,
                   ),
                   const SizedBox(
                     height: 15,
                   ),
-                  TextFormField(
-                    keyboardType: TextInputType.visiblePassword,
-                    controller: password2Controller,
-                    style: Theme.of(context).textTheme.subtitle2,
-                    decoration: InputDecoration(
-                      labelText: 'Re-enter Password',
-                      suffixIcon: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _hidePassword = !_hidePassword;
-                          });
-                        },
-                        child: Icon(
-                          _hidePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: themeManager.currentTheme == ThemeMode.light
-                              ? Colors.black
-                              : ServiceProvider.whiteColorShade70,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: TextFormField(
+                      keyboardType: TextInputType.visiblePassword,
+                      controller: password2Controller,
+                      style: Theme.of(context).textTheme.subtitle2,
+                      decoration: InputDecoration(
+                        labelText: 'Re-enter Password',
+                        suffixIcon: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _hidePassword = !_hidePassword;
+                            });
+                          },
+                          child: Icon(
+                            _hidePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: themeManager.currentTheme == ThemeMode.light
+                                ? Colors.black
+                                : ServiceProvider.whiteColorShade70,
+                          ),
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password is required';
+                        }
+                        return null;
+                      },
+                      obscureText: _hidePassword,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password is required';
-                      }
-                      return null;
-                    },
-                    obscureText: _hidePassword,
                   ),
                   const SizedBox(
                     height: 30,
                   ),
-                  TextFormField(
-                    keyboardType: TextInputType.name,
-                    controller: referralCodeController,
-                    style: Theme.of(context).textTheme.subtitle2,
-                    decoration: const InputDecoration(
-                      labelText: 'Referral Code (Optional)',
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: TextFormField(
+                      keyboardType: TextInputType.name,
+                      controller: referralCodeController,
+                      style: Theme.of(context).textTheme.subtitle2,
+                      decoration: const InputDecoration(
+                        labelText: 'Referral Code (Optional)',
+                      ),
+                      validator: (value) {
+                        // if (value == null || value.isEmpty) {
+                        //   return 'Name is required';
+                        // }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      // if (value == null || value.isEmpty) {
-                      //   return 'Name is required';
-                      // }
-                      return null;
-                    },
                   ),
                   const SizedBox(
                     height: 25,
                   ),
-                  SizedBox(
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
                     width: MediaQuery.of(context).size.width,
                     height: 50,
                     child: MaterialButton(
@@ -421,7 +454,10 @@ class _RegisterState extends State<Register> {
                                         context,
                                         'Warning',
                                         'The two password does not match!');
-                                  } else {
+                                  } else if (Provider.of<
+                                              InternetConnectionStatus>(context,
+                                          listen: false) ==
+                                      InternetConnectionStatus.connected) {
                                     var responseData = await registration(
                                         nameController.text,
                                         emailController.text,
@@ -461,6 +497,11 @@ class _RegisterState extends State<Register> {
                                             });
                                       }
                                     }
+                                  } else {
+                                    serviceProvider.popWarningErrorMsg(
+                                        context,
+                                        'Internet Connection',
+                                        'No internet connection on your device!');
                                   }
                                 }
                               }),

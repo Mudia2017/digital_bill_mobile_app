@@ -4,6 +4,7 @@ import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
 
 class DeleteAccountPassword extends StatefulWidget {
@@ -41,108 +42,119 @@ class _DeleteAccountPasswordState extends State<DeleteAccountPassword> {
     double screenH = MediaQuery.of(context).size.height;
     double screenW = MediaQuery.of(context).size.width;
     return Scaffold(
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
-        child: Container(
-          child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: screenH * 0.023,
-                  ),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(30, 35, 13, 0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            Navigator.of(context).pop();
-                          },
-                          splashColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          child: Container(
-                            height: screenH * 0.053,
-                            width: screenW * 0.12,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                              color:
-                                  themeManager.currentTheme == ThemeMode.light
-                                      ? ServiceProvider.greyBGbackArrow
-                                      : ServiceProvider.blueTrackColor,
-                            ),
-                            child: const Icon(
-                              Icons.arrow_back_ios_new,
-                              color: Colors.white,
+      body: SafeArea(
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
+          child: Container(
+            child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    Visibility(
+                      child: serviceProvider.noInternetConnectionBadge(context),
+                      visible: Provider.of<InternetConnectionStatus>(context) ==
+                          InternetConnectionStatus.disconnected,
+                    ),
+                    SizedBox(
+                      height: screenH * 0.023,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(30, 0, 13, 0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.of(context).pop();
+                            },
+                            splashColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            child: Container(
+                              height: screenH * 0.053,
+                              width: screenW * 0.12,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                color:
+                                    themeManager.currentTheme == ThemeMode.light
+                                        ? ServiceProvider.greyBGbackArrow
+                                        : ServiceProvider.blueTrackColor,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_back_ios_new,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        ),
-                        Text(
-                          'Delete Acct',
-                          style: ServiceProvider.pageNameFont,
-                        ),
-                        Container(
-                          margin: const EdgeInsets.only(left: 10.0),
-                          child: Column(
-                            children: [
-                              if (ServiceProvider.profileImgFrmServer != '' &&
-                                  ServiceProvider.profileImgFrmServer !=
-                                      dotenv.env['URL_ENDPOINT'])
-                                CircleAvatar(
+                          Text(
+                            'Delete Acct',
+                            style: ServiceProvider.pageNameFont,
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(left: 10.0),
+                            child: Column(
+                              children: [
+                                if (ServiceProvider.profileImgFrmServer != '' &&
+                                    ServiceProvider.profileImgFrmServer !=
+                                        dotenv.env['URL_ENDPOINT'])
+                                  serviceProvider.displayProfileImg(
+                                    (screenH * 7.5) / 100,
+                                    (screenW * 15) / 100,
+                                  )
+                                // CircleAvatar(
+                                //     radius: 30,
+                                //     backgroundImage: NetworkImage(
+                                //         ServiceProvider.profileImgFrmServer))
+                                else if (ServiceProvider.temporaryLocalImg !=
+                                    null)
+                                  CircleAvatar(
                                     radius: 30,
-                                    backgroundImage: NetworkImage(
-                                        ServiceProvider.profileImgFrmServer))
-                              else if (ServiceProvider.temporaryLocalImg !=
-                                  null)
-                                CircleAvatar(
-                                  radius: 30,
-                                  backgroundImage: (ServiceProvider
-                                      .temporaryLocalImg!.image),
-                                )
-                              else
-                                CircleAvatar(
-                                  radius: 30,
-                                  backgroundColor: ServiceProvider.lightgray2,
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Colors.grey.shade600,
+                                    backgroundImage: (ServiceProvider
+                                        .temporaryLocalImg!.image),
+                                  )
+                                else
+                                  CircleAvatar(
+                                    radius: 30,
+                                    backgroundColor: ServiceProvider.lightgray2,
+                                    child: Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: Colors.grey.shade600,
+                                    ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(child: Container()),
+                        Container(
+                          padding: const EdgeInsets.only(right: 13),
+                          width: screenW * 0.7,
+                          child: Text(
+                            widget.name,
+                            style: GoogleFonts.sarabun(
+                              fontWeight: FontWeight.w200,
+                            ).copyWith(
+                                fontSize: 18,
+                                fontStyle: FontStyle.italic,
+                                color:
+                                    themeManager.currentTheme == ThemeMode.light
+                                        ? Colors.black87
+                                        : Colors.grey),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(child: Container()),
-                      Container(
-                        padding: const EdgeInsets.only(right: 13),
-                        width: screenW * 0.7,
-                        child: Text(
-                          widget.name,
-                          style: GoogleFonts.sarabun(
-                            fontWeight: FontWeight.w200,
-                          ).copyWith(
-                              fontSize: 18,
-                              fontStyle: FontStyle.italic,
-                              color:
-                                  themeManager.currentTheme == ThemeMode.light
-                                      ? Colors.black87
-                                      : Colors.grey),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.end,
-                        ),
-                      ),
-                    ],
-                  ),
-                  pageContentStructure(),
-                ],
-              )),
+                    pageContentStructure(),
+                  ],
+                )),
+          ),
         ),
       ),
     );
@@ -162,6 +174,7 @@ class _DeleteAccountPasswordState extends State<DeleteAccountPassword> {
               Text(
                 ' ${widget.name}, to delete this account completely, provide the password related to this account',
                 style: ServiceProvider.greetUserFont1,
+                textAlign: TextAlign.center,
               ),
               SizedBox(
                 height: screenH * 0.04,
@@ -286,7 +299,7 @@ class _DeleteAccountPasswordState extends State<DeleteAccountPassword> {
                               // DE-ACTIVATING ACCT WAS NOT SUCCESSFUL
 
                               serviceProvider.showToast(
-                                  context, 'Incorrect password!');
+                                  context, resp['errorMsg'].toString());
                             }
                           }
                         },

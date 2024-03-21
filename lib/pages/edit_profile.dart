@@ -271,6 +271,9 @@ class _EditProfileState extends State<EditProfile> {
                                   serviceProvider.showSuccessToast(
                                       context, 'Update successful');
                                   Navigator.of(context).pop();
+                                } else if (response['isSuccess'] == false) {
+                                  serviceProvider.popWarningErrorMsg(context,
+                                      'Error', response['errorMsg'].toString());
                                 }
                               }
                             }

@@ -124,10 +124,14 @@ class _AccountSettingsState extends State<AccountSettings> {
                           if (ServiceProvider.profileImgFrmServer != '' &&
                               ServiceProvider.profileImgFrmServer !=
                                   dotenv.env['URL_ENDPOINT'])
-                            CircleAvatar(
-                                radius: 30,
-                                backgroundImage: NetworkImage(
-                                    ServiceProvider.profileImgFrmServer))
+                            serviceProvider.displayProfileImg(
+                              (screenH * 7.5) / 100,
+                              (screenW * 15) / 100,
+                            )
+                          // CircleAvatar(
+                          //     radius: 30,
+                          //     backgroundImage: NetworkImage(
+                          //         ServiceProvider.profileImgFrmServer))
                           else if (ServiceProvider.temporaryLocalImg != null)
                             CircleAvatar(
                               radius: 30,
@@ -328,9 +332,15 @@ class _AccountSettingsState extends State<AccountSettings> {
                                                 serviceProvider
                                                     .showSuccessToast(context,
                                                         'Update successful');
-                                              } else {
-                                                serviceProvider.showErrorToast(
-                                                    context, 'Failed');
+                                              } else if (response[
+                                                      'isSuccess'] ==
+                                                  false) {
+                                                serviceProvider
+                                                    .popWarningErrorMsg(
+                                                        context,
+                                                        'Error',
+                                                        response['errorMsg']
+                                                            .toString());
                                               }
                                             },
                                           ),
@@ -436,9 +446,15 @@ class _AccountSettingsState extends State<AccountSettings> {
                                                 serviceProvider
                                                     .showSuccessToast(context,
                                                         'Update successful');
-                                              } else {
-                                                serviceProvider.showErrorToast(
-                                                    context, 'Failed');
+                                              } else if (response[
+                                                      'isSuccess'] ==
+                                                  false) {
+                                                serviceProvider
+                                                    .popWarningErrorMsg(
+                                                        context,
+                                                        'Error',
+                                                        response['errorMsg']
+                                                            .toString());
                                               }
 
                                               // var isBiomet = await serviceProvider
@@ -596,9 +612,15 @@ class _AccountSettingsState extends State<AccountSettings> {
                                                 serviceProvider
                                                     .showSuccessToast(context,
                                                         'Update successful');
-                                              } else {
-                                                serviceProvider.showErrorToast(
-                                                    context, 'Failed');
+                                              } else if (response[
+                                                      'isSuccess'] ==
+                                                  false) {
+                                                serviceProvider
+                                                    .popWarningErrorMsg(
+                                                        context,
+                                                        'Error',
+                                                        response['errorMsg']
+                                                            .toString());
                                               }
                                             },
                                           ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:digital_mobile_bill/components/service_provider.dart';
 import 'package:digital_mobile_bill/pages/home_page.dart';
 import 'package:digital_mobile_bill/route/route.dart';
@@ -16,6 +17,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -296,6 +298,7 @@ class _LoginWithPinState extends State<LoginWithPin> {
         }
       }
     } on PlatformException catch (e) {
+      serviceProvider.showErrorToast(context, e.toString());
       print(e);
     }
   }
@@ -314,69 +317,71 @@ class _LoginWithPinState extends State<LoginWithPin> {
       child: Scaffold(
         body: SafeArea(
           child: Builder(
-            builder: (context) => Container(
-              // color: ServiceProvider.backGroundColor,
-              // color: Theme.of(context).colorScheme.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Column(
-                children: <Widget>[
-                  const SizedBox(
-                    height: 15,
+            builder: (context) => Column(
+              children: <Widget>[
+                Visibility(
+                  child: serviceProvider.noInternetConnectionBadge(context),
+                  visible: Provider.of<InternetConnectionStatus>(context) ==
+                      InternetConnectionStatus.disconnected,
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                avatarIcon(),
+                getName(),
+                const SizedBox(
+                  height: 15,
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Text(
+                    'Authorization is required to access your account!',
+                    textAlign: TextAlign.center,
+                    style: ServiceProvider.pageInfoWithDarkGreyFont,
                   ),
-                  avatarIcon(),
-                  getName(),
-                  const SizedBox(
-                    height: 15,
+                ),
+                const Expanded(
+                  child: SizedBox(),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    pinField(pinOneController),
+                    pinField(pinTwoController),
+                    pinField(pinThreeController),
+                    pinField(pinFourController),
+                  ],
+                ),
+                const Expanded(
+                  child: SizedBox(),
+                ),
+                loginWithEmail(),
+                const Expanded(
+                  child: SizedBox(),
+                ),
+                if (loginAttemptCount > 4)
+                  Text(
+                    "Try again in $_start",
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: ServiceProvider.redWarningColor),
                   ),
-                  Center(
-                    child: Text(
-                      'Authorization is required to access your account!',
-                      style: ServiceProvider.pageInfoWithDarkGreyFont,
-                    ),
+                const Expanded(
+                  child: SizedBox(),
+                ),
+                if (isActiveBtn)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 30),
+                    child: numberKeyPad(),
                   ),
-                  const Expanded(
-                    child: SizedBox(),
+                if (!isActiveBtn)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 30),
+                    child: serviceProvider.disableNumberKeyPad(),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      pinField(pinOneController),
-                      pinField(pinTwoController),
-                      pinField(pinThreeController),
-                      pinField(pinFourController),
-                    ],
-                  ),
-                  const Expanded(
-                    child: SizedBox(),
-                  ),
-                  loginWithEmail(),
-                  const Expanded(
-                    child: SizedBox(),
-                  ),
-                  if (loginAttemptCount > 4)
-                    Text(
-                      "Try again in $_start",
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: ServiceProvider.redWarningColor),
-                    ),
-                  const Expanded(
-                    child: SizedBox(),
-                  ),
-                  if (isActiveBtn)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 30),
-                      child: numberKeyPad(),
-                    ),
-                  if (!isActiveBtn)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 30),
-                      child: serviceProvider.disableNumberKeyPad(),
-                    ),
-                  createAcct(),
-                ],
-              ),
+                createAcct()
+              ],
             ),
           ),
         ),
@@ -565,9 +570,16 @@ class _LoginWithPinState extends State<LoginWithPin> {
     });
     if (pinIndex == 4) {
       // print(strPin);
-      // AUTHENTICATE USER'S PIN IN THE SERVER
 
-      await authenticateUserPin(widget.email, widget.userName, strPin);
+      // CHECK IF THERE IS INTERNET CONNECTION
+      Provider.of<InternetConnectionStatus>(context, listen: false) ==
+              InternetConnectionStatus.disconnected
+          ? serviceProvider.popWarningErrorMsg(context, 'Internet Connection',
+              'No internet connection on your device!')
+          :
+          // AUTHENTICATE USER'S PIN IN THE SERVER
+
+          await authenticateUserPin(widget.email, widget.userName, strPin);
     }
   }
 
@@ -639,6 +651,8 @@ class _LoginWithPinState extends State<LoginWithPin> {
 
   // AVATAR ICON
   Widget avatarIcon() {
+    double screenH = MediaQuery.of(context).size.height;
+    double screenW = MediaQuery.of(context).size.width;
     return Container(
       padding: const EdgeInsets.only(right: 12),
       child: Row(
@@ -646,11 +660,16 @@ class _LoginWithPinState extends State<LoginWithPin> {
         children: [
           if (ServiceProvider.profileImgFrmServer != '' &&
               ServiceProvider.profileImgFrmServer != dotenv.env['URL_ENDPOINT'])
-            CircleAvatar(
-              radius: 30,
-              backgroundImage:
-                  NetworkImage(ServiceProvider.profileImgFrmServer),
+            serviceProvider.displayProfileImg(
+              (screenH * 7.5) / 100,
+              (screenW * 15) / 100,
             )
+
+          // CircleAvatar(
+          //   radius: 30,
+          //   backgroundImage:
+          //       NetworkImage(ServiceProvider.profileImgFrmServer),
+          // )
           else
             CircleAvatar(
                 radius: 30,
@@ -667,6 +686,7 @@ class _LoginWithPinState extends State<LoginWithPin> {
 
   Widget getName() {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [

@@ -336,7 +336,7 @@ class _ReferralCodeState extends State<ReferralCode>
                       },
                     ),
                   ),
-                  customeListView(toJsonReferrals),
+                  customeListView(toJsonReferrals)
                 ],
               ),
             ]),
@@ -351,8 +351,10 @@ class _ReferralCodeState extends State<ReferralCode>
     return Expanded(
       child: referrals.isNotEmpty
           ? ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              shrinkWrap: true,
               itemCount: referrals.length,
-              itemBuilder: (BuildContext cxt, int x) {
+              itemBuilder: (cxt, int x) {
                 return TweenAnimationBuilder<double>(
                   tween: Tween(begin: 1.0, end: 0.0),
                   duration: const Duration(seconds: 1),
@@ -510,11 +512,12 @@ class _ReferralCodeState extends State<ReferralCode>
                                           serviceProvider.showSuccessToast(
                                               context,
                                               'Internal transfer successful.');
-                                        } else {
+                                        } else if (refer['isSuccess'] ==
+                                            false) {
                                           serviceProvider.popWarningErrorMsg(
                                             context,
                                             'Error',
-                                            refer['isSuccess'].toString(),
+                                            refer['errorMsg'].toString(),
                                           );
                                         }
                                       }
@@ -612,264 +615,3 @@ class _ReferralCodeState extends State<ReferralCode>
     );
   }
 }
-
-// class ReferralLog extends StatelessWidget {
-//   List referrals;
-//   final token;
-//   final email;
-//   ReferralLog(
-//       {Key? key,
-//       required this.referrals,
-//       required this.token,
-//       required this.email})
-//       : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     var serviceProvider = Provider.of<ServiceProvider>(context);
-//     return Expanded(
-//       child: referrals.isNotEmpty
-//           ? ListView.builder(
-//               itemCount: referrals.length,
-//               itemBuilder: (BuildContext cxt, int x) {
-//                 return TweenAnimationBuilder<double>(
-//                   tween: Tween(begin: 1.0, end: 0.0),
-//                   duration: const Duration(seconds: 1),
-//                   curve: Curves.ease,
-//                   builder: (context, value, child) {
-//                     return Container(
-//                       margin: const EdgeInsets.symmetric(horizontal: 8.0),
-//                       height: 90,
-//                       child: Transform.translate(
-//                         offset: Offset(
-//                           value * 150,
-//                           0.0,
-//                         ),
-//                         child: child,
-//                       ),
-//                     );
-//                   },
-//                   child: Card(
-//                     color: themeManager.currentTheme == ThemeMode.light
-//                         ? Colors.white
-//                         : ServiceProvider.blueTrackColor,
-//                     shape: const RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.all(
-//                         Radius.circular(20),
-//                       ),
-//                     ),
-//                     elevation: 0,
-//                     child: Center(
-//                       child: ListTile(
-//                         leading: Stack(
-//                           children: [
-//                             if (referrals[x]['profileImg'] !=
-//                                 'http://192.168.43.50:8000')
-//                               CircleAvatar(
-//                                 radius: 30,
-//                                 backgroundImage:
-//                                     NetworkImage(referrals[x]['profileImg']),
-//                               )
-//                             else
-//                               CircleAvatar(
-//                                   radius: 30,
-//                                   backgroundColor:
-//                                       ServiceProvider.innerBlueBackgroundColor,
-//                                   child: const Icon(
-//                                     Icons.person,
-//                                     size: 55,
-//                                   ))
-//                           ],
-//                         ),
-//                         title: Text(
-//                           referrals[x]['referredCusName'],
-//                           maxLines: 2,
-//                           overflow: TextOverflow.ellipsis,
-//                           style: GoogleFonts.sora().copyWith(
-//                             fontSize: 13,
-//                           ),
-//                         ),
-//                         subtitle: Text(
-//                           (referrals[x]['created_date_time']),
-//                           style: GoogleFonts.sarabun(
-//                             fontWeight: FontWeight.w200,
-//                           ).copyWith(
-//                               fontSize: 12,
-//                               fontStyle: FontStyle.italic,
-//                               color: Colors.grey),
-//                         ),
-//                         trailing: Column(
-//                           children: [
-//                             if (referrals[x]['referral_process'] ==
-//                                 'Processing')
-//                               SizedBox(
-//                                 width: 70,
-//                                 child: OutlinedButton(
-//                                   style: OutlinedButton.styleFrom(
-//                                     padding: const EdgeInsets.all(3),
-//                                     side: const BorderSide(
-//                                       color: Color.fromRGBO(195, 98, 49, 1),
-//                                     ),
-//                                   ),
-//                                   onPressed: () {
-//                                     serviceProvider.popDialogMsgAlignLeft(
-//                                         context,
-//                                         'Info',
-//                                         'Name: ${referrals[x]['referredCusName']}\nBonus Amount: ${referrals[x]['bonus_amt']}\nDescription: Yet to make initial deposit');
-//                                   },
-//                                   child: Text(
-//                                     referrals[x]['referral_process'],
-//                                     style: const TextStyle(
-//                                       color: Color.fromRGBO(195, 98, 49, 1),
-//                                       // fontWeight: FontWeight.bold,
-//                                       fontSize: 11,
-//                                     ),
-//                                   ),
-//                                 ),
-//                               )
-//                             else if (referrals[x]['referral_process'] ==
-//                                     'Transfer' &&
-//                                 referrals[x]['is_payment_verified'] == true)
-//                               SizedBox(
-//                                 width: 70,
-//                                 child: OutlinedButton(
-//                                   style: OutlinedButton.styleFrom(
-//                                     padding: const EdgeInsets.all(5),
-//                                     side: BorderSide(
-//                                       color: ServiceProvider
-//                                           .innerBlueBackgroundColor,
-//                                     ),
-//                                   ),
-//                                   onPressed: () async {
-//                                     if (referrals[x]['referral_process'] ==
-//                                             'Transfer' &&
-//                                         referrals[x]['is_payment_verified'] ==
-//                                             true &&
-//                                         referrals[x]['bonus_amt'] > 0 &&
-//                                         referrals[x][
-//                                                 'is_referral_process_complete'] ==
-//                                             false) {
-//                                       var inputResp = await serviceProvider
-//                                           .popWarningConfirmActionYesNo(
-//                                         context,
-//                                         'Info',
-//                                         "Are you sure you want to transfer your referral bonus of NGN ${referrals[x]['bonus_amt']} to your wallet? ",
-//                                         Colors.grey,
-//                                       );
-//                                       if (inputResp != null &&
-//                                           inputResp != false) {
-//                                         // UPDATE THE SERVER TABLE WITH REFERRAL
-//                                         // PROCESS COMPLETE TO TRUE AND RETURN RESPONSE.
-//                                         Map refer =
-//                                             await serviceProvider.getReferrals(
-//                                                 context,
-//                                                 token!,
-//                                                 email,
-//                                                 referrals[x]['id'],
-//                                                 'updateReferral');
-//                                         if (refer['isSuccess']) {
-//                                           serviceProvider.showSuccessToast(
-//                                               context,
-//                                               'Internal transfer successful.');
-//                                         } else {
-//                                           serviceProvider.popWarningErrorMsg(
-//                                             context,
-//                                             'Error',
-//                                             refer['isSuccess'].toString(),
-//                                           );
-//                                         }
-//                                       }
-//                                     } else {
-//                                       serviceProvider.popDialogMsgAlignLeft(
-//                                         context,
-//                                         'Info',
-//                                         'Name: ${referrals[x]['referredCusName']}\nBonus Amount: ${referrals[x]['bonus_amt']}\nDescription: This amount have been transferred to your wallet',
-//                                       );
-//                                     }
-//                                   },
-//                                   child: Text(
-//                                     referrals[x]['referral_process'],
-//                                     style: TextStyle(
-//                                       color: ServiceProvider
-//                                           .innerBlueBackgroundColor,
-//                                       // fontWeight: FontWeight.bold,
-//                                       fontSize: 11,
-//                                     ),
-//                                   ),
-//                                 ),
-//                               )
-//                             else if (referrals[x]['referral_process'] ==
-//                                 'Complete')
-//                               SizedBox(
-//                                 width: 70,
-//                                 child: OutlinedButton(
-//                                   style: OutlinedButton.styleFrom(
-//                                     padding: const EdgeInsets.all(5),
-//                                     side: BorderSide(
-//                                       color: Colors.green.shade700,
-//                                     ),
-//                                   ),
-//                                   onPressed: () {
-//                                     serviceProvider.popDialogMsgAlignLeft(
-//                                       context,
-//                                       'Info',
-//                                       'Name: ${referrals[x]['referredCusName']}\nBonus Amount: ${referrals[x]['bonus_amt']}\nDescription: This amount have been transferred to your wallet',
-//                                     );
-//                                   },
-//                                   child: Text(
-//                                     referrals[x]['referral_process'],
-//                                     style: TextStyle(
-//                                       color: Colors.green.shade700,
-//                                       // fontWeight: FontWeight.bold,
-//                                       fontSize: 11,
-//                                     ),
-//                                   ),
-//                                 ),
-//                               )
-//                             else
-//                               SizedBox(
-//                                 width: 70,
-//                                 child: OutlinedButton(
-//                                   style: OutlinedButton.styleFrom(
-//                                     padding: const EdgeInsets.all(5),
-//                                     side: BorderSide(
-//                                       color: Colors.red.shade800,
-//                                     ),
-//                                   ),
-//                                   onPressed: () {
-//                                     serviceProvider.popDialogMsgAlignLeft(
-//                                       context,
-//                                       'Info',
-//                                       "Name: ${referrals[x]['referredCusName']}\nBonus Amount: ${referrals[x]['bonus_amt']}\nDescription: Customer's transferred amount yet to be verified.",
-//                                     );
-//                                   },
-//                                   child: Text(
-//                                     referrals[x]['referral_process'],
-//                                     style: TextStyle(
-//                                       color: ServiceProvider.redWarningColor,
-//                                       // fontWeight: FontWeight.bold,
-//                                       fontSize: 11,
-//                                     ),
-//                                   ),
-//                                 ),
-//                               )
-//                           ],
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-//                 );
-//               })
-//           : Column(
-//               mainAxisAlignment: MainAxisAlignment.center,
-//               children: [
-//                 const Icon(Icons.receipt_rounded, color: Colors.grey, size: 80),
-//                 Text(
-//                   'No Record',
-//                   style: ServiceProvider.warningFont,
-//                 ),
-//               ],
-//             ),
-//     );
-//   }
-// }

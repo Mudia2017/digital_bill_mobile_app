@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_paystack/flutter_paystack.dart';
 import 'package:provider/provider.dart';
@@ -91,10 +92,14 @@ class _FundWalletState extends State<FundWallet> {
                           if (ServiceProvider.profileImgFrmServer != '' &&
                               ServiceProvider.profileImgFrmServer !=
                                   dotenv.env['URL_ENDPOINT'])
-                            CircleAvatar(
-                                radius: 30,
-                                backgroundImage: NetworkImage(
-                                    ServiceProvider.profileImgFrmServer))
+                            serviceProvider.displayProfileImg(
+                              (screenH * 7.5) / 100,
+                              (screenW * 15) / 100,
+                            )
+                          // CircleAvatar(
+                          //     radius: 30,
+                          //     backgroundImage: NetworkImage(
+                          //         ServiceProvider.profileImgFrmServer))
                           else if (ServiceProvider.temporaryLocalImg != null)
                             CircleAvatar(
                               radius: 30,
@@ -497,7 +502,7 @@ class _FundWalletState extends State<FundWallet> {
           return StatefulBuilder(
             builder: (context, setstate) {
               return SizedBox(
-                height: screenH - 600,
+                height: (screenH * 40) / 100,
                 child: Column(
                   children: [
                     const SizedBox(height: 10),
@@ -575,19 +580,30 @@ class _FundWalletState extends State<FundWallet> {
                                 ),
                               ),
                               onTap: () {
-                                if (_hasNotBeenPressed) {
-                                  _hasNotBeenPressed = !_hasNotBeenPressed;
-                                }
-                                if (_hasNotBeenPressed2) {
-                                  _hasNotBeenPressed2 = _hasNotBeenPressed2;
+                                // CHECK IF THERE IS INTERNET CONNECTION
+                                if (Provider.of<InternetConnectionStatus>(
+                                        context,
+                                        listen: false) ==
+                                    InternetConnectionStatus.connected) {
+                                  if (_hasNotBeenPressed) {
+                                    _hasNotBeenPressed = !_hasNotBeenPressed;
+                                  }
+                                  if (_hasNotBeenPressed2) {
+                                    _hasNotBeenPressed2 = _hasNotBeenPressed2;
+                                  } else {
+                                    _hasNotBeenPressed2 = !_hasNotBeenPressed2;
+                                  }
+                                  setstate(() {});
+                                  double amt = 0;
+                                  amt = double.parse(amtFieldController.text
+                                      .replaceAll(RegExp('[^0-9]'), ''));
+                                  chargeCard(amt, 'Debit Card');
                                 } else {
-                                  _hasNotBeenPressed2 = !_hasNotBeenPressed2;
+                                  serviceProvider.popWarningErrorMsg(
+                                      context,
+                                      'Internet Connection',
+                                      'No internet connection on your device!');
                                 }
-                                setstate(() {});
-                                double amt = 0;
-                                amt = double.parse(amtFieldController.text
-                                    .replaceAll(RegExp('[^0-9]'), ''));
-                                chargeCard(amt, 'Debit Card');
                               },
                             ),
                             const SizedBox(
@@ -645,17 +661,29 @@ class _FundWalletState extends State<FundWallet> {
                                 ),
                               ),
                               onTap: () {
-                                if (_hasNotBeenPressed2) {
-                                  setstate(() {
-                                    _hasNotBeenPressed2 = !_hasNotBeenPressed2;
-                                  });
-                                }
-                                if (_hasNotBeenPressed) {
-                                  _hasNotBeenPressed = _hasNotBeenPressed;
+                                // CHECK IF THERE IS INTERNET CONNECTION
+                                if (Provider.of<InternetConnectionStatus>(
+                                        context,
+                                        listen: false) ==
+                                    InternetConnectionStatus.connected) {
+                                  if (_hasNotBeenPressed2) {
+                                    setstate(() {
+                                      _hasNotBeenPressed2 =
+                                          !_hasNotBeenPressed2;
+                                    });
+                                  }
+                                  if (_hasNotBeenPressed) {
+                                    _hasNotBeenPressed = _hasNotBeenPressed;
+                                  } else {
+                                    _hasNotBeenPressed = !_hasNotBeenPressed;
+                                  }
+                                  setstate(() {});
                                 } else {
-                                  _hasNotBeenPressed = !_hasNotBeenPressed;
+                                  serviceProvider.popWarningErrorMsg(
+                                      context,
+                                      'Internet Connection',
+                                      'No internet connection on your device!');
                                 }
-                                setstate(() {});
                               },
                             ),
                           ],
@@ -831,8 +859,6 @@ class _FundWalletState extends State<FundWallet> {
     setState(() {
       isGeneratingCode = !isGeneratingCode;
     });
-
-    // String accessCode = "sk_test_58e5b7fab484bda3aab4289ce5a50345209c8dac";
 
     setState(() {
       isGeneratingCode = !isGeneratingCode;

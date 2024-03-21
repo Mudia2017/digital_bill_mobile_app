@@ -3,6 +3,7 @@ import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:digital_mobile_bill/widget/airtime_data_structure.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
 
 class CableTV extends StatefulWidget {
@@ -83,6 +84,12 @@ class _CableTVState extends State<CableTV> {
           width: screenW,
           child: Column(
             children: [
+              Visibility(
+                child: SafeArea(
+                    child: serviceProvider.noInternetConnectionBadge(context)),
+                visible: Provider.of<InternetConnectionStatus>(context) ==
+                    InternetConnectionStatus.disconnected,
+              ),
               Container(
                 padding: const EdgeInsets.fromLTRB(30, 55, 30, 25),
                 child: Row(

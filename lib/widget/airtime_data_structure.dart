@@ -1909,19 +1909,6 @@ class _AirtimeDataStructureState extends State<AirtimeDataStructure> {
                     }
                   }
                 }
-                // else if (selectListVal == '' &&
-                //     widget.call != 'airtimeServiceProvider') {
-                //   print('CALLED3');
-                //   setState(() {
-                //     isServicePorviderSelected = false;
-                //   });
-                // } else if (selectListVal != '' &&
-                //     widget.call != 'cableTvServiceProvider') {
-                //   print('CALLED4');
-                //   setState(() {
-                //     isServicePorviderSelected = true;
-                //   });
-                // }
               }
             }),
       ),

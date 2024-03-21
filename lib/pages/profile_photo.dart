@@ -111,7 +111,7 @@ class _ProfilePhotoState extends State<ProfilePhoto> {
                                 });
                           } else {
                             serviceProvider.showErrorToast(
-                                context, 'Error uploading image!');
+                                context, serverRes.toString());
                           }
                         },
                       ),

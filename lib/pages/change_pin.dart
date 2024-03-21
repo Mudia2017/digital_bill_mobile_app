@@ -3,6 +3,7 @@ import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
 
 class ChangePin extends StatefulWidget {
@@ -38,15 +39,19 @@ class _ChangePinState extends State<ChangePin> {
     return Scaffold(
       body: SafeArea(
         child: Builder(
-          builder: (context) => Container(
-            // color: ServiceProvider.backGroundColor,
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: Column(
-              children: <Widget>[
-                SizedBox(
-                  height: screenH * 0.023,
-                ),
-                Row(
+          builder: (context) => Column(
+            children: <Widget>[
+              Visibility(
+                child: serviceProvider.noInternetConnectionBadge(context),
+                visible: Provider.of<InternetConnectionStatus>(context) ==
+                    InternetConnectionStatus.disconnected,
+              ),
+              SizedBox(
+                height: screenH * 0.023,
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     InkWell(
@@ -77,64 +82,66 @@ class _ChangePinState extends State<ChangePin> {
                     avatarIcon(),
                   ],
                 ),
-                getName(),
-                const SizedBox(
-                  height: 15,
+              ),
+              getName(),
+              const SizedBox(
+                height: 15,
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: Text(
+                  'If pin is successfully changed, the new pin will be required to access your account & daily transactions.',
+                  style: ServiceProvider.pageInfoWithDarkGreyFont,
+                  textAlign: TextAlign.center,
                 ),
-                Center(
-                  child: Text(
-                    'If pin is successfully changed, the new pin will be required to access your account & daily transactions.',
-                    style: ServiceProvider.pageInfoWithDarkGreyFont,
-                  ),
+              ),
+              const Expanded(
+                child: SizedBox(),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  pinField(pinOneController),
+                  pinField(pinTwoController),
+                  pinField(pinThreeController),
+                  pinField(pinFourController),
+                ],
+              ),
+              const Expanded(
+                child: SizedBox(),
+              ),
+              if (oldPin == '')
+                Text(
+                  'Key in old pin',
+                  style: ServiceProvider.redContentFont,
+                )
+              else
+                Text(
+                  'Key in new pin',
+                  style: ServiceProvider.redContentFont,
                 ),
-                const Expanded(
-                  child: SizedBox(),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    pinField(pinOneController),
-                    pinField(pinTwoController),
-                    pinField(pinThreeController),
-                    pinField(pinFourController),
-                  ],
-                ),
-                const Expanded(
-                  child: SizedBox(),
-                ),
-                if (oldPin == '')
-                  Text(
-                    'Key in old pin',
-                    style: ServiceProvider.redContentFont,
-                  )
-                else
-                  Text(
-                    'Key in new pin',
-                    style: ServiceProvider.redContentFont,
-                  ),
-                // if (loginAttemptCount > 4)
-                //   Text(
-                //     "Try again in $_start",
-                //     style: TextStyle(
-                //         fontSize: 16,
-                //         fontWeight: FontWeight.bold,
-                //         color: ServiceProvider.redWarningColor),
-                //   ),
-                const Expanded(
-                  child: SizedBox(),
-                ),
-                // if (isActiveBtn)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 30),
-                  child: numberKeyPad(),
-                ),
-                // if (!isActiveBtn)
-                // Padding(
-                //   padding: const EdgeInsets.only(bottom: 30),
-                //   child: serviceProvider.disableNumberKeyPad(),
-                // ),
-              ],
-            ),
+              // if (loginAttemptCount > 4)
+              //   Text(
+              //     "Try again in $_start",
+              //     style: TextStyle(
+              //         fontSize: 16,
+              //         fontWeight: FontWeight.bold,
+              //         color: ServiceProvider.redWarningColor),
+              //   ),
+              const Expanded(
+                child: SizedBox(),
+              ),
+              // if (isActiveBtn)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 30),
+                child: numberKeyPad(),
+              ),
+              // if (!isActiveBtn)
+              // Padding(
+              //   padding: const EdgeInsets.only(bottom: 30),
+              //   child: serviceProvider.disableNumberKeyPad(),
+              // ),
+            ],
           ),
         ),
       ),
@@ -192,6 +199,9 @@ class _ChangePinState extends State<ChangePin> {
 
   // AVATAR ICON
   Widget avatarIcon() {
+    var serviceProvider = Provider.of<ServiceProvider>(context);
+    double screenH = MediaQuery.of(context).size.height;
+    double screenW = MediaQuery.of(context).size.width;
     return Container(
       padding: const EdgeInsets.only(right: 12),
       child: Row(
@@ -199,10 +209,14 @@ class _ChangePinState extends State<ChangePin> {
         children: [
           if (ServiceProvider.profileImgFrmServer != '' &&
               ServiceProvider.profileImgFrmServer != dotenv.env['URL_ENDPOINT'])
-            CircleAvatar(
-                radius: 30,
-                backgroundImage:
-                    NetworkImage(ServiceProvider.profileImgFrmServer))
+            serviceProvider.displayProfileImg(
+              (screenH * 7.5) / 100,
+              (screenW * 15) / 100,
+            )
+          // CircleAvatar(
+          //     radius: 30,
+          //     backgroundImage:
+          //         NetworkImage(ServiceProvider.profileImgFrmServer))
           else if (ServiceProvider.temporaryLocalImg != null)
             CircleAvatar(
               radius: 30,
@@ -476,7 +490,7 @@ class _ChangePinState extends State<ChangePin> {
                 serviceProvider.popWarningErrorMsg(
                     context, 'Error', 'Something went wrong!!!');
               }
-            } else {
+            } else if (serverResp['isSuccess'] == true) {
               bool isOkay = await serviceProvider.popDialogMsg(context, 'Info',
                   'Your security pin was successfully changed.');
               if (isOkay) {

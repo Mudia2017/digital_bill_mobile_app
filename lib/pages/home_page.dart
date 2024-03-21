@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:digital_mobile_bill/components/service_provider.dart';
 import 'package:digital_mobile_bill/pages/acct_profile.dart';
 import 'package:digital_mobile_bill/pages/airtime_page.dart';
@@ -23,6 +24,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:http/http.dart' as http;
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -279,7 +281,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ? ServiceProvider.backGroundColor
             : ServiceProvider.darkNavyBGColor,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 0),
+          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
           child: GNav(
             gap: 8,
             activeColor: ServiceProvider.lightBlueBackGroundColor,
@@ -366,8 +368,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(
-            height: 30,
+          SizedBox(
+            height: (screenH * 2) / 100,
           ),
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 1.0, end: 0.0),
@@ -394,13 +396,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         data,
                       );
                       if (response['isSuccess'] == true) {
-                        // setState(() {
-                        // serviceProvider.isShowBal = response['isBalVisible'];
-                        // serviceProvider.isShowBal = isToggle;
-                        // });
                         serviceProvider.showSuccessToast(
                             context, 'Update successful');
                         print(serviceProvider.isShowBal);
+                      } else if (response['isSuccess'] == false) {
+                        serviceProvider.popWarningErrorMsg(
+                            context, 'Error', response['errorMsg'].toString());
                       }
                     },
                     icon: Icon(
@@ -1062,10 +1063,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             if (ServiceProvider.profileImgFrmServer != '' &&
                 ServiceProvider.profileImgFrmServer !=
                     dotenv.env['URL_ENDPOINT'])
-              CircleAvatar(
-                  radius: 30,
-                  backgroundImage:
-                      NetworkImage(ServiceProvider.profileImgFrmServer))
+              serviceProvider.displayProfileImg(
+                (screenH * 7.5) / 100,
+                (screenW * 15) / 100,
+              )
+            // CircleAvatar(
+            //     radius: 30,
+            //     backgroundImage:
+            //         NetworkImage(ServiceProvider.profileImgFrmServer))
             else if (ServiceProvider.temporaryLocalImg != null)
               CircleAvatar(
                 radius: 30,
@@ -1088,9 +1093,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   _depositButton() {
     return Container(
-      margin: EdgeInsets.only(
-        bottom: (screenH * 2) / 100,
-      ),
+      // margin: EdgeInsets.only(
+      //   bottom: (screenH * 2) / 100,
+      // ),
       child: OutlinedButton(
         onPressed: () {
           Navigator.of(context).pushNamed(RouteManager.fundWallet, arguments: {

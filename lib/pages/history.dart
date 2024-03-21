@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -70,543 +71,576 @@ class _HistoryState extends State<History> with TickerProviderStateMixin {
       initialIndex: indexTab,
     );
     return Scaffold(
-        body: SafeArea(
-      child: WillPopScope(
-        onWillPop: () async {
-          bool isResponse = await serviceProvider.popWarningConfirmActionYesNo(
-              context,
-              'Warning',
-              'Do you want to exit the app?',
-              Colors.white60);
-          if (isResponse == true) {
-            SystemNavigator.pop();
-          }
-          return Future.value(false);
-        },
-        child: Container(
-          // color: ServiceProvider.backGroundColor,
-          height: screenH,
-          width: screenW,
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(),
-                  Text(
-                    'History',
-                    style: ServiceProvider.pageNameFont,
-                  ),
+      body: SafeArea(
+        child: WillPopScope(
+          onWillPop: () async {
+            bool isResponse =
+                await serviceProvider.popWarningConfirmActionYesNo(context,
+                    'Warning', 'Do you want to exit the app?', Colors.white60);
+            if (isResponse == true) {
+              SystemNavigator.pop();
+            }
+            return Future.value(false);
+          },
+          child: Container(
+            // color: ServiceProvider.backGroundColor,
+            height: screenH,
+            width: screenW,
 
-                  // THIS WAS SUPPOSE TO BE SETTINGS TO FILTER TRANSACTION LOG
-                  // BUT, I WAS UNABLE TO FIGURE OUT WHEN THE TABS IS SWIPE
-                  // FROM LEFT TO RIGHT SO AS TO HIDE OR MAKE IT VISIBLE.
-                  // IT WILL ONLY BE NEEDED ON THE TRANSACTION LOG.
-
-                  // InkWell(
-                  //   onTap: () {
-                  //     filter();
-                  //   },
-                  //   child: Container(
-                  //     height: screenH * 0.053,
-                  //     width: screenW * 0.12,
-                  //     decoration: BoxDecoration(
-                  //       border: Border.all(
-                  //         color: ServiceProvider.innerBlueBackgroundColor,
-                  //       ),
-                  //       borderRadius:
-                  //           const BorderRadius.all(Radius.circular(10)),
-                  //     ),
-                  //     child: Icon(
-                  //       Icons.settings_outlined,
-                  //       color: ServiceProvider.innerBlueBackgroundColor,
-                  //       size: 30,
-                  //     ),
-                  //   ),
-                  // )
-                  Container(),
-                ],
-              ),
-              SizedBox(
-                height: screenH * 0.008,
-              ),
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            child: Column(
+              children: [
+                Visibility(
+                  child: serviceProvider.noInternetConnectionBadge(context),
+                  visible: Provider.of<InternetConnectionStatus>(context) ==
+                      InternetConnectionStatus.disconnected,
                 ),
-                elevation: 5,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TabBar(
-                      onTap: (index) {
-                        // It gives current selected index 0 for First Tab , second 1, like....
-                        print("Index of Tab:" + index.toString());
-                      },
-                      indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: ServiceProvider.innerBlueBackgroundColor,
-                      ),
-                      controller: tabController,
-                      isScrollable: true,
-                      labelPadding: const EdgeInsets.symmetric(horizontal: 30),
-                      tabs: const [
-                        Tab(
-                          child: Text('Transaction log'),
-                        ),
-                        Tab(
-                          child: Text('Account statement'),
-                        )
-                      ]),
-                ),
-              ),
-              Expanded(
-                  child: TabBarView(controller: tabController, children: [
-                // FIRST TAB
-                transLog.isNotEmpty
-                    ? ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: transLog.length,
-                        itemBuilder: (context, x) {
-                          return TweenAnimationBuilder<double>(
-                            tween: Tween(begin: -0.5, end: 0.0),
-                            duration: const Duration(seconds: 1),
-                            curve: Curves.ease,
-                            builder: (context, value, child) {
-                              indexTab = 0;
-                              return Transform.translate(
-                                offset: Offset(
-                                  value * 150,
-                                  0.0,
-                                ),
-                                child: child,
-                              );
-                            },
-                            child: Card(
-                              color:
-                                  themeManager.currentTheme == ThemeMode.light
-                                      ? Colors.white
-                                      : ServiceProvider.blueTrackColor,
-                              child: transLog.isNotEmpty
-                                  ? ListTile(
-                                      leading: Stack(
-                                        children: [
-                                          if (transLog[x]['serviceCode'] ==
-                                                  'mtnAirtime' ||
-                                              transLog[x]['serviceCode'] ==
-                                                  'mtnData')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/mtn_logo.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else if (transLog[x]['serviceCode'] ==
-                                                  'gloAirtime' ||
-                                              transLog[x]['serviceCode'] ==
-                                                  'gloData')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/glo.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else if (transLog[x]['serviceCode'] ==
-                                                  'airtelAirtime' ||
-                                              transLog[x]['serviceCode'] ==
-                                                  'airtelData')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/airtel.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else if (transLog[x]['serviceCode'] ==
-                                                  '9mobileAirtime' ||
-                                              transLog[x]['serviceCode'] ==
-                                                  '9mobileData')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/9mobile.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else if (transLog[x]['serviceCode'] ==
-                                              'spectranet')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/spectranet.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else if (transLog[x]['serviceCode'] ==
-                                              'smile')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/smile.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else if (transLog[x]['serviceCode'] ==
-                                              'fiberone')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/fiberone.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else if (transLog[x]['serviceCode'] ==
-                                              'dstv')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/dstv.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else if (transLog[x]['serviceCode'] ==
-                                              'gotv')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/gotv.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else if (transLog[x]['serviceCode'] ==
-                                              'startimes')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/startimes.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else if (transLog[x]['serviceCode'] ==
-                                              'showmax')
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/showmax.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                          else
-                                            Container(
-                                              height: 40,
-                                              width: 40,
-                                              decoration: BoxDecoration(
-                                                image: const DecorationImage(
-                                                    image: AssetImage(
-                                                        "images/no_image.png")),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            )
-                                        ],
-                                      ),
-                                      title: Text(
-                                        transLog[x]['serviceProvided'],
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: ServiceProvider.contentFont,
-                                      ),
-                                      subtitle: Stack(
-                                        children: [
-                                          if (transLog[x]['subscription'] != '')
-                                            Text(
-                                              transLog[x]['subscription']!,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.sora()
-                                                  .copyWith(
-                                                      fontSize: 12,
-                                                      color: Colors.grey),
-                                            )
-                                          else
-                                            Text(
-                                              transLog[x]['transactionNo']!,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.sora()
-                                                  .copyWith(
-                                                      fontSize: 12,
-                                                      color: Colors.grey),
-                                            )
-                                        ],
-                                      ),
-                                      trailing: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            "₦ ${serviceProvider.numberFormater(double.parse(transLog[x]['amount']))}",
-                                            style:
-                                                GoogleFonts.sarabun().copyWith(
-                                              color:
-                                                  themeManager.currentTheme ==
-                                                          ThemeMode.light
-                                                      ? ServiceProvider
-                                                          .darkBlueShade4
-                                                      : Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          Text(
-                                            (transLog[x]['createdDate']),
-                                            style: GoogleFonts.sora().copyWith(
-                                              color: ServiceProvider.idColor,
-                                              fontSize: 11,
-                                            ),
-                                          ),
-                                          InkWell(
-                                            child: Container(
-                                                width: 60,
-                                                decoration: BoxDecoration(
-                                                    color: ServiceProvider
-                                                        .innerBlueBackgroundColor,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5),
-                                                    border: Border.all(
-                                                      color: ServiceProvider
-                                                          .innerBlueBackgroundColor,
-                                                    )),
-                                                child: const Text(
-                                                  'Detail',
-                                                  textAlign: TextAlign.center,
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                  ),
-                                                )),
-                                            onTap: () {
-                                              serviceProvider.popDialogMsg(
-                                                  context,
-                                                  'Info',
-                                                  "Transaction No: ${transLog[x]['transactionNo']}\nSubscription: ${transLog[x]['subscription']}\nAmount: ₦ ${serviceProvider.numberFormater(double.parse(transLog[x]['amount']))}\nData: ${transLog[x]['dataAmt']}MB\nService Provided: ${transLog[x]['serviceProvided']}\nCreated Date: ${transLog[x]['createdDate']}\nStatus: ${transLog[x]['status']}");
-                                            },
-                                          )
-                                        ],
-                                      ),
-                                    )
-                                  : Container(),
-                            ),
-                          );
-                        })
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.receipt_rounded,
-                              color: Colors.grey, size: 80),
-                          Text(
-                            'No Record',
-                            style: ServiceProvider.warningFont,
-                          ),
-                        ],
-                      ),
-
-                // SECOND TAB (ACCT STATEMENT)
-                SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Container(),
                       Text(
-                        'Choose statement period',
-                        style: ServiceProvider.greetUserFont1,
+                        'History',
+                        style: ServiceProvider.pageNameFont,
                       ),
-                      SizedBox(
-                        height: screenH * 0.004,
+                      Container(),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: screenH * 0.008,
+                ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 5,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      Text(
-                        'Start',
-                        style: themeManager.currentTheme == ThemeMode.light
-                            ? ServiceProvider.cardFontBold4
-                            : ServiceProvider.cardFontBoldLight,
-                      ),
-                      SizedBox(
-                        child: SizedBox(
+                      child: TabBar(
+                          onTap: (index) {
+                            // It gives current selected index 0 for First Tab , second 1, like....
+                            print("Index of Tab:" + index.toString());
+                          },
+                          indicator: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: ServiceProvider.innerBlueBackgroundColor,
+                          ),
+                          controller: tabController,
+                          isScrollable: true,
+                          labelPadding:
+                              const EdgeInsets.symmetric(horizontal: 30),
+                          tabs: const [
+                            Tab(
+                              child: Text('Transaction log'),
+                            ),
+                            Tab(
+                              child: Text('Account statement'),
+                            )
+                          ]),
+                    ),
+                  ),
+                ),
+                Expanded(
+                    child: TabBarView(controller: tabController, children: [
+                  // FIRST TAB
+                  RefreshIndicator(
+                    onRefresh: () async {
+                      initalCall();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: transLog.isNotEmpty
+                          ? ListView.builder(
+                              physics: const BouncingScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: transLog.length,
+                              itemBuilder: (context, x) {
+                                return TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: -0.5, end: 0.0),
+                                  duration: const Duration(seconds: 1),
+                                  curve: Curves.ease,
+                                  builder: (context, value, child) {
+                                    indexTab = 0;
+                                    return Transform.translate(
+                                      offset: Offset(
+                                        value * 150,
+                                        0.0,
+                                      ),
+                                      child: child,
+                                    );
+                                  },
+                                  child: Card(
+                                    color: themeManager.currentTheme ==
+                                            ThemeMode.light
+                                        ? Colors.white
+                                        : ServiceProvider.blueTrackColor,
+                                    child: transLog.isNotEmpty
+                                        ? ListTile(
+                                            leading: Stack(
+                                              children: [
+                                                if (transLog[x]
+                                                            ['serviceCode'] ==
+                                                        'mtnAirtime' ||
+                                                    transLog[x]
+                                                            ['serviceCode'] ==
+                                                        'mtnData')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/mtn_logo.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else if (transLog[x]
+                                                            ['serviceCode'] ==
+                                                        'gloAirtime' ||
+                                                    transLog[x]
+                                                            ['serviceCode'] ==
+                                                        'gloData')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/glo.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else if (transLog[x]
+                                                            ['serviceCode'] ==
+                                                        'airtelAirtime' ||
+                                                    transLog[x]
+                                                            ['serviceCode'] ==
+                                                        'airtelData')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/airtel.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else if (transLog[x]
+                                                            ['serviceCode'] ==
+                                                        '9mobileAirtime' ||
+                                                    transLog[x]
+                                                            ['serviceCode'] ==
+                                                        '9mobileData')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/9mobile.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else if (transLog[x]
+                                                        ['serviceCode'] ==
+                                                    'spectranet')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/spectranet.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else if (transLog[x]
+                                                        ['serviceCode'] ==
+                                                    'smile')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/smile.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else if (transLog[x]
+                                                        ['serviceCode'] ==
+                                                    'fiberone')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/fiberone.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else if (transLog[x]
+                                                        ['serviceCode'] ==
+                                                    'dstv')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/dstv.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else if (transLog[x]
+                                                        ['serviceCode'] ==
+                                                    'gotv')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/gotv.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else if (transLog[x]
+                                                        ['serviceCode'] ==
+                                                    'startimes')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/startimes.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else if (transLog[x]
+                                                        ['serviceCode'] ==
+                                                    'showmax')
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/showmax.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                                else
+                                                  Container(
+                                                    height: 40,
+                                                    width: 40,
+                                                    decoration: BoxDecoration(
+                                                      image: const DecorationImage(
+                                                          image: AssetImage(
+                                                              "images/no_image.png")),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                    ),
+                                                  )
+                                              ],
+                                            ),
+                                            title: Text(
+                                              transLog[x]['serviceProvided'],
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style:
+                                                  ServiceProvider.contentFont,
+                                            ),
+                                            subtitle: Stack(
+                                              children: [
+                                                if (transLog[x]
+                                                        ['subscription'] !=
+                                                    '')
+                                                  Text(
+                                                    transLog[x]
+                                                        ['subscription']!,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: GoogleFonts.sora()
+                                                        .copyWith(
+                                                            fontSize: 12,
+                                                            color: Colors.grey),
+                                                  )
+                                                else
+                                                  Text(
+                                                    transLog[x]
+                                                        ['transactionNo']!,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: GoogleFonts.sora()
+                                                        .copyWith(
+                                                            fontSize: 12,
+                                                            color: Colors.grey),
+                                                  )
+                                              ],
+                                            ),
+                                            trailing: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                Text(
+                                                  "₦ ${serviceProvider.numberFormater(double.parse(transLog[x]['amount']))}",
+                                                  style: GoogleFonts.sarabun()
+                                                      .copyWith(
+                                                    color: themeManager
+                                                                .currentTheme ==
+                                                            ThemeMode.light
+                                                        ? ServiceProvider
+                                                            .darkBlueShade4
+                                                        : Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  (transLog[x]['createdDate']),
+                                                  style: GoogleFonts.sora()
+                                                      .copyWith(
+                                                    color:
+                                                        ServiceProvider.idColor,
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                                InkWell(
+                                                  child: Container(
+                                                      width: 60,
+                                                      decoration: BoxDecoration(
+                                                          color: ServiceProvider
+                                                              .innerBlueBackgroundColor,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(5),
+                                                          border: Border.all(
+                                                            color: ServiceProvider
+                                                                .innerBlueBackgroundColor,
+                                                          )),
+                                                      child: const Text(
+                                                        'Detail',
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                        ),
+                                                      )),
+                                                  onTap: () {
+                                                    serviceProvider.popDialogMsg(
+                                                        context,
+                                                        'Info',
+                                                        "Transaction No: ${transLog[x]['transactionNo']}\nSubscription: ${transLog[x]['subscription']}\nAmount: ₦ ${serviceProvider.numberFormater(double.parse(transLog[x]['amount']))}\nData: ${transLog[x]['dataAmt']}MB\nService Provided: ${transLog[x]['serviceProvided']}\nCreated Date: ${transLog[x]['createdDate']}\nStatus: ${transLog[x]['status']}");
+                                                  },
+                                                )
+                                              ],
+                                            ),
+                                          )
+                                        : Container(),
+                                  ),
+                                );
+                              })
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Center(
+                                  child: Icon(Icons.receipt_rounded,
+                                      color: Colors.grey, size: 80),
+                                ),
+                                Text(
+                                  'No Record',
+                                  style: ServiceProvider.warningFont,
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+
+                  // SECOND TAB (ACCT STATEMENT)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Choose statement period',
+                          style: ServiceProvider.greetUserFont1,
+                        ),
+                        SizedBox(
+                          height: screenH * 0.004,
+                        ),
+                        Text(
+                          'Start',
+                          style: themeManager.currentTheme == ThemeMode.light
+                              ? ServiceProvider.cardFontBold4
+                              : ServiceProvider.cardFontBoldLight,
+                        ),
+                        SizedBox(
+                          child: SizedBox(
+                              height: screenH * 0.2,
+                              width: screenW * 0.8,
+                              child: CupertinoTheme(
+                                data: CupertinoThemeData(
+                                  textTheme: CupertinoTextThemeData(
+                                    dateTimePickerTextStyle: TextStyle(
+                                      letterSpacing: 2,
+                                      fontSize: 20.0,
+                                      color: themeManager.currentTheme ==
+                                              ThemeMode.light
+                                          ? Colors.black
+                                          : Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                child: CupertinoDatePicker(
+                                  maximumYear: DateTime.now().year,
+                                  maximumDate: DateTime.now(),
+                                  mode: CupertinoDatePickerMode.date,
+                                  initialDateTime: startDate,
+                                  onDateTimeChanged: (_startDate) {
+                                    print('Inital: ' + startDate.toString());
+
+                                    startDate = _startDate;
+
+                                    var selectedDate = DateFormat('dd/MM/yyyy')
+                                        .format(startDate);
+                                    print(
+                                        'Selected: ' + selectedDate.toString());
+                                  },
+                                ),
+                              )),
+                        ),
+                        Builder(builder: (context) {
+                          indexTab = 1;
+                          return Text(
+                            'End',
+                            style: themeManager.currentTheme == ThemeMode.light
+                                ? ServiceProvider.cardFontBold4
+                                : ServiceProvider.cardFontBoldLight,
+                          );
+                        }),
+                        SizedBox(
+                          child: SizedBox(
                             height: screenH * 0.2,
                             width: screenW * 0.8,
                             child: CupertinoTheme(
                               data: CupertinoThemeData(
                                 textTheme: CupertinoTextThemeData(
-                                  dateTimePickerTextStyle: TextStyle(
-                                    letterSpacing: 2,
-                                    fontSize: 20.0,
-                                    color: themeManager.currentTheme ==
-                                            ThemeMode.light
-                                        ? Colors.black
-                                        : Colors.white,
-                                  ),
-                                ),
+                                    dateTimePickerTextStyle: TextStyle(
+                                  color: themeManager.currentTheme ==
+                                          ThemeMode.light
+                                      ? Colors.black
+                                      : Colors.white,
+                                  letterSpacing: 2,
+                                  fontSize: 20.0,
+                                )),
                               ),
                               child: CupertinoDatePicker(
                                 maximumYear: DateTime.now().year,
                                 maximumDate: DateTime.now(),
                                 mode: CupertinoDatePickerMode.date,
-                                initialDateTime: startDate,
-                                onDateTimeChanged: (_startDate) {
+                                initialDateTime: endDate,
+                                onDateTimeChanged: (_endDate) {
                                   print('Inital: ' + startDate.toString());
 
-                                  startDate = _startDate;
+                                  endDate = _endDate;
 
-                                  var selectedDate = DateFormat('dd/MM/yyyy')
-                                      .format(startDate);
-                                  print('Selected: ' + selectedDate.toString());
+                                  var selectedDate =
+                                      DateFormat('dd/MM/yyyy').format(endDate);
+                                  print('Selected End: ' +
+                                      selectedDate.toString());
                                 },
                               ),
-                            )),
-                      ),
-                      Builder(builder: (context) {
-                        indexTab = 1;
-                        return Text(
-                          'End',
-                          style: themeManager.currentTheme == ThemeMode.light
-                              ? ServiceProvider.cardFontBold4
-                              : ServiceProvider.cardFontBoldLight,
-                        );
-                      }),
-                      SizedBox(
-                        child: SizedBox(
-                          height: screenH * 0.2,
-                          width: screenW * 0.8,
-                          child: CupertinoTheme(
-                            data: CupertinoThemeData(
-                              textTheme: CupertinoTextThemeData(
-                                  dateTimePickerTextStyle: TextStyle(
-                                color:
-                                    themeManager.currentTheme == ThemeMode.light
-                                        ? Colors.black
-                                        : Colors.white,
-                                letterSpacing: 2,
-                                fontSize: 20.0,
-                              )),
-                            ),
-                            child: CupertinoDatePicker(
-                              maximumYear: DateTime.now().year,
-                              maximumDate: DateTime.now(),
-                              mode: CupertinoDatePickerMode.date,
-                              initialDateTime: endDate,
-                              onDateTimeChanged: (_endDate) {
-                                print('Inital: ' + startDate.toString());
-
-                                endDate = _endDate;
-
-                                var selectedDate =
-                                    DateFormat('dd/MM/yyyy').format(endDate);
-                                print(
-                                    'Selected End: ' + selectedDate.toString());
-                              },
                             ),
                           ),
                         ),
-                      ),
-                      SizedBox(
-                        height: screenH * 0.04,
-                      ),
-                      SizedBox(
-                        height: 40,
-                        child: MaterialButton(
-                          onPressed: () async {
-                            var valDate = startDate.compareTo(endDate);
-                            if (valDate > 0) {
-                              serviceProvider.popWarningErrorMsg(
-                                  context,
-                                  'Error',
-                                  'Start date most be greater or equal to end date.');
-                            } else {
-                              var resp = await serviceProvider.getAcctStatement(
-                                  context, token, startDate, endDate);
-                              if (resp['isSuccess'] == false) {
-                                serviceProvider.popWarningErrorMsg(context,
-                                    'Error', resp['errorMsg'].toString());
-                              } else if (resp['isSuccess'] == true) {
-                                showAcctStatement(resp['acctStatement'],
-                                    resp['openBal'], resp['compInfo']);
+                        SizedBox(
+                          height: screenH * 0.04,
+                        ),
+                        SizedBox(
+                          height: 40,
+                          child: MaterialButton(
+                            onPressed: () async {
+                              var valDate = startDate.compareTo(endDate);
+                              if (valDate > 0) {
+                                serviceProvider.popWarningErrorMsg(
+                                    context,
+                                    'Error',
+                                    'Start date most be greater or equal to end date.');
+                              } else {
+                                var resp =
+                                    await serviceProvider.getAcctStatement(
+                                        context, token, startDate, endDate);
+                                if (resp['isSuccess'] == false) {
+                                  serviceProvider.popWarningErrorMsg(context,
+                                      'Error', resp['errorMsg'].toString());
+                                } else if (resp['isSuccess'] == true) {
+                                  showAcctStatement(resp['acctStatement'],
+                                      resp['openBal'], resp['compInfo']);
+                                }
                               }
-                            }
-                            print(valDate);
-                            print(
-                                'Start Date:  ${startDate.toString()} \nEnd Date: ${endDate.toString()}');
-                          },
-                          child: const Text(
-                            'Generate',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22,
-                              color: Colors.white,
+                              print(valDate);
+                              print(
+                                  'Start Date:  ${startDate.toString()} \nEnd Date: ${endDate.toString()}');
+                            },
+                            child: const Text(
+                              'Generate',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 22,
+                                color: Colors.white,
+                              ),
                             ),
+                            color: ServiceProvider.innerBlueBackgroundColor,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.0)),
                           ),
-                          color: ServiceProvider.innerBlueBackgroundColor,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0)),
-                        ),
-                      )
-                    ],
-                  ),
-                )
-              ])),
-            ],
+                        )
+                      ],
+                    ),
+                  )
+                ])),
+              ],
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 
   filter() {

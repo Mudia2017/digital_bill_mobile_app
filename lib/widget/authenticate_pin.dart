@@ -3,6 +3,7 @@ import 'package:digital_mobile_bill/route/route.dart';
 import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -75,15 +76,19 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
     return Scaffold(
       body: SafeArea(
         child: Builder(
-            builder: (context) => Container(
-                  // color: ServiceProvider.backGroundColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: screenH * 0.023,
-                      ),
-                      Row(
+            builder: (context) => Column(
+                  children: [
+                    Visibility(
+                      child: serviceProvider.noInternetConnectionBadge(context),
+                      visible: Provider.of<InternetConnectionStatus>(context) ==
+                          InternetConnectionStatus.disconnected,
+                    ),
+                    SizedBox(
+                      height: screenH * 0.023,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           InkWell(
@@ -93,6 +98,7 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
                             splashColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             child: Container(
+                              padding: const EdgeInsets.only(left: 0),
                               height: screenH * 0.053,
                               width: screenW * 0.12,
                               decoration: BoxDecoration(
@@ -115,20 +121,24 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
                           avatarIcon(),
                         ],
                       ),
-                      getName(),
-                      const Expanded(
-                        child: SizedBox(),
+                    ),
+                    getName(),
+                    const Expanded(
+                      child: SizedBox(),
+                    ),
+                    Center(
+                      child: Text(
+                        widget.pageInfo1!,
+                        style: ServiceProvider.pageInfoWithDarkGreyFont,
+                        textAlign: TextAlign.center,
                       ),
-                      Center(
-                        child: Text(
-                          widget.pageInfo1!,
-                          style: ServiceProvider.pageInfoWithDarkGreyFont,
-                        ),
-                      ),
-                      const Expanded(
-                        child: SizedBox(),
-                      ),
-                      Row(
+                    ),
+                    const Expanded(
+                      child: SizedBox(),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           pinField(pinOneController),
@@ -137,15 +147,16 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
                           pinField(pinFourController),
                         ],
                       ),
-                      const Expanded(
-                        child: SizedBox(),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 30),
-                        child: numberKeyPad(),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const Expanded(
+                      child: SizedBox(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          bottom: 30, left: 12, right: 12),
+                      child: numberKeyPad(),
+                    ),
+                  ],
                 )),
       ),
     );
@@ -153,38 +164,43 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
 
   // AVATAR ICON
   Widget avatarIcon() {
-    return Container(
-      padding: const EdgeInsets.only(right: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          if (ServiceProvider.profileImgFrmServer != '')
-            CircleAvatar(
-                radius: 30,
-                backgroundImage:
-                    NetworkImage(ServiceProvider.profileImgFrmServer))
-          else if (ServiceProvider.temporaryLocalImg != null)
-            CircleAvatar(
-              radius: 30,
-              backgroundImage: (ServiceProvider.temporaryLocalImg!.image),
-            )
-          else
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: ServiceProvider.lightgray2,
-              child: Icon(
-                Icons.person,
-                size: 60,
-                color: Colors.grey.shade600,
-              ),
+    var serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
+    double screenH = MediaQuery.of(context).size.height;
+    double screenW = MediaQuery.of(context).size.width;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        if (ServiceProvider.profileImgFrmServer != '')
+          serviceProvider.displayProfileImg(
+            (screenH * 7.5) / 100,
+            (screenW * 15) / 100,
+          )
+        // CircleAvatar(
+        //     radius: 30,
+        //     backgroundImage:
+        //         NetworkImage(ServiceProvider.profileImgFrmServer))
+        else if (ServiceProvider.temporaryLocalImg != null)
+          CircleAvatar(
+            radius: 30,
+            backgroundImage: (ServiceProvider.temporaryLocalImg!.image),
+          )
+        else
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: ServiceProvider.lightgray2,
+            child: Icon(
+              Icons.person,
+              size: 60,
+              color: Colors.grey.shade600,
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
   Widget getName() {
     return Container(
+      padding: const EdgeInsets.only(right: 12.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -199,48 +215,46 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
 
   // PIN INPUT FIELD
   pinField(controllerIndex) {
-    return Container(
-      child: SizedBox(
-        height: 60,
-        width: 55,
-        child: PhysicalModel(
-          borderRadius: BorderRadius.circular(25),
-          color: Colors.white,
-          elevation: 5,
-          shadowColor: Colors.black,
-          child: TextFormField(
-            obscureText: true,
-            controller: controllerIndex,
-            enabled: false,
-            // onChanged: (value) {
-            //   if (value.length == 1) {
-            //     // FocusScope.of(context).nextFocus();
-            //   }
-            // },
-            // onSaved: (pin4) {},
-            decoration: InputDecoration(
-              // hintText: '0',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              fillColor: Colors.grey.shade300,
-              filled: true,
-              contentPadding: const EdgeInsets.only(
-                top: 15,
-              ),
+    return SizedBox(
+      height: 60,
+      width: 55,
+      child: PhysicalModel(
+        borderRadius: BorderRadius.circular(25),
+        color: Colors.white,
+        elevation: 5,
+        shadowColor: Colors.black,
+        child: TextFormField(
+          obscureText: true,
+          controller: controllerIndex,
+          enabled: false,
+          // onChanged: (value) {
+          //   if (value.length == 1) {
+          //     // FocusScope.of(context).nextFocus();
+          //   }
+          // },
+          // onSaved: (pin4) {},
+          decoration: InputDecoration(
+            // hintText: '0',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            style: const TextStyle(
-              fontSize: 35,
-              color: Colors.black,
+            fillColor: Colors.grey.shade300,
+            filled: true,
+            contentPadding: const EdgeInsets.only(
+              top: 15,
             ),
-            // style: Theme.of(context).textTheme.headline6,
-            // keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            // inputFormatters: [
-            //   LengthLimitingTextInputFormatter(1),
-            //   FilteringTextInputFormatter.digitsOnly,
-            // ],
           ),
+          style: const TextStyle(
+            fontSize: 35,
+            color: Colors.black,
+          ),
+          // style: Theme.of(context).textTheme.headline6,
+          // keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          // inputFormatters: [
+          //   LengthLimitingTextInputFormatter(1),
+          //   FilteringTextInputFormatter.digitsOnly,
+          // ],
         ),
       ),
     );
@@ -424,6 +438,7 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
 
     if (pinIndex == 4) {
       print(strPin);
+
       // AUTHENTICATE USER'S PIN IN THE SERVER
       var resp = await serviceProvider.processTransaction(
         context,
@@ -469,16 +484,6 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
         //   (Route<dynamic> route) => false,
         // );
       }
-      // else {
-      //   pinIndex = 0;
-      //   pin1 = '';
-      //   pinOneController.clear();
-      //   pinTwoController.clear();
-      //   pinThreeController.clear();
-      //   pinFourController.clear();
-      //   serviceProvider.popWarningErrorMsg(
-      //       context, 'Error', resp['errorMsg'].toString());
-      // }
     }
   }
 

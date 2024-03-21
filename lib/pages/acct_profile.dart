@@ -14,6 +14,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:image/image.dart' as Img;
@@ -95,38 +96,52 @@ class _AccountProfileState extends State<AccountProfile> {
   Future setUpdateAcct(context, String token, Map data) async {
     var serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
     var serverResponse;
-    // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
-    // serviceProvider.hudLoadingEffect(context, true);
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
+        // serviceProvider.hudLoadingEffect(context, true);
 
-    // Map data = {'call': call, '_isShowAcctBal': isShowAcctBal};
+        // Map data = {'call': call, '_isShowAcctBal': isShowAcctBal};
 
-    var response = await http
-        .post(
-          Uri.parse(
-              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_set_updateAcct/'),
-          // body: json.encode(),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Token $token",
-          },
-          // encoding: Encoding.getByName("utf-8")
-          body: jsonEncode(data),
-        )
-        .timeout(const Duration(seconds: 60));
+        var response = await http
+            .post(
+              Uri.parse(
+                  '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_set_updateAcct/'),
+              // body: json.encode(),
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Token $token",
+              },
+              // encoding: Encoding.getByName("utf-8")
+              body: jsonEncode(data),
+            )
+            .timeout(const Duration(seconds: 60));
 
-    if (response.statusCode == 200) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      // serviceProvider.hudLoadingEffect(context, false);
+        if (response.statusCode == 200) {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          // serviceProvider.hudLoadingEffect(context, false);
 
-      serverResponse = json.decode(response.body);
-      serviceProvider.isShowBal = serverResponse['isBalVisible'];
+          serverResponse = json.decode(response.body);
+          serviceProvider.isShowBal = serverResponse['isBalVisible'];
+        } else {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          // serviceProvider.hudLoadingEffect(context, false);
+
+          serviceProvider.showErrorToast(context, 'Fail to update');
+        }
+        // notifyListeners();
+      } catch (error) {
+        serverResponse = {'isSuccess': false, 'errorMsg': error};
+      }
     } else {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      // serviceProvider.hudLoadingEffect(context, false);
-
-      serviceProvider.showErrorToast(context, 'Fail to update');
+      serverResponse = {
+        'isSuccess': false,
+        'errorMsg': ServiceProvider.noInternetMsg
+      };
     }
-    // notifyListeners();
+
     return serverResponse;
   }
 
@@ -299,7 +314,7 @@ class _AccountProfileState extends State<AccountProfile> {
                                 Colors.white60);
                         if (isResponse) {
                           var response =
-                              await serviceProvider.signOutAcct(token);
+                              await serviceProvider.signOutAcct(context, token);
                           if (response['isSuccess']) {
                             await serviceProvider.deleteDefaultNumFrmPref();
                             bool isSignOut = await serviceProvider.signOut();
@@ -310,27 +325,10 @@ class _AccountProfileState extends State<AccountProfile> {
                                 arguments: {'isLastStack': true},
                               );
                             }
+                          } else if (response['isSuccess'] == false) {
+                            serviceProvider.showErrorToast(
+                                context, response['errorMsg'].toString());
                           }
-                          // switch (response['isSuccess']) {
-
-                          // case true:
-                          //   print('LOGGED OUT FROM SERVER');
-                          //   bool isSignOut =
-                          //       await serviceProvider.signOut();
-                          //   if (isSignOut) {
-                          //     Navigator.of(context).pushNamedAndRemoveUntil(
-                          //       RouteManager.login,
-                          //       (Route<dynamic> route) => false,
-                          //     );
-                          //   }
-                          //   break;
-                          // case false:
-                          //   print('NOT LOG OUT');
-                          //   break;
-
-                          // default:
-                          //   print('ERROR MESSAGE');
-                          // }
                         }
                       },
                       child: profileListTileStructure(
@@ -352,6 +350,7 @@ class _AccountProfileState extends State<AccountProfile> {
 
   Future pickImage(ImageSource source) async {
     var serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
+
     try {
       final image = await ImagePicker().pickImage(source: source);
       bool isCycleState = await serviceProvider.getLifeCycleStateFrmPref();
@@ -379,9 +378,10 @@ class _AccountProfileState extends State<AccountProfile> {
         // }
         serviceProvider.showSuccessToast(context, 'Profile photo updated');
       } else {
-        serviceProvider.showErrorToast(context, 'Error uploading image!');
+        serviceProvider.showErrorToast(context, response.toString());
       }
     } on PlatformException catch (error) {
+      serviceProvider.popWarningErrorMsg(context, 'Error', 'Connection error!');
       // rethrow;
     }
   }
@@ -407,6 +407,8 @@ class _AccountProfileState extends State<AccountProfile> {
 
   _avatarIcon() {
     var serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
+    double screenH = MediaQuery.of(context).size.height;
+    double screenW = MediaQuery.of(context).size.width;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 1.0, end: 0.0),
       duration: const Duration(seconds: 2),
@@ -511,8 +513,13 @@ class _AccountProfileState extends State<AccountProfile> {
 
                                               // serviceProvider.showToast(context,
                                               //     'Profile picture updated');
+                                            } else if (response['isSuccess'] ==
+                                                false) {
+                                              serviceProvider.showErrorToast(
+                                                  context,
+                                                  response['errorMsg']
+                                                      .toString());
                                             }
-                                            print('REMOVE PHOTO');
                                           }
                                         },
                                         icon: const Icon(
@@ -575,10 +582,14 @@ class _AccountProfileState extends State<AccountProfile> {
                 else if (ServiceProvider.profileImgFrmServer != '' &&
                     ServiceProvider.profileImgFrmServer !=
                         dotenv.env['URL_ENDPOINT'])
-                  CircleAvatar(
-                      radius: 40,
-                      backgroundImage:
-                          NetworkImage(ServiceProvider.profileImgFrmServer))
+                  serviceProvider.displayProfileImg(
+                    (screenH * 7.5) / 100,
+                    (screenW * 15) / 100,
+                  )
+                // CircleAvatar(
+                //     radius: 40,
+                //     backgroundImage:
+                //         NetworkImage(ServiceProvider.profileImgFrmServer))
                 else if (ServiceProvider.temporaryLocalImg != null)
                   CircleAvatar(
                     radius: 40,

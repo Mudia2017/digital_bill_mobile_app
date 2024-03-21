@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:digital_mobile_bill/route/route.dart';
 import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
@@ -12,12 +13,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:motion_toast/motion_toast.dart';
 import 'package:motion_toast/resources/arrays.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:number_display/number_display.dart';
 
@@ -34,6 +37,7 @@ class ServiceProvider extends ChangeNotifier {
   static String userAgreement = '';
   static String urReferralCode = '';
   bool isBiometricVal = false;
+  static String noInternetMsg = 'No internet connection on your device!';
 
   static Color idColor = const Color(0xFF9ca2ac);
   static Color backGroundColor = const Color.fromRGBO(230, 233, 235, 1);
@@ -68,6 +72,14 @@ class ServiceProvider extends ChangeNotifier {
   ).copyWith(
     color: Colors.white,
     fontSize: 16,
+  );
+
+  static TextStyle smBoldFontName = GoogleFonts.sarabun(
+    fontWeight: FontWeight.bold,
+    fontStyle: FontStyle.italic,
+  ).copyWith(
+    color: Colors.white,
+    fontSize: 12,
   );
 
   static TextStyle pageNameFont = GoogleFonts.sora().copyWith(
@@ -898,121 +910,208 @@ class ServiceProvider extends ChangeNotifier {
     pref.remove('meterNum');
   }
 
+  // WIDGET TO USED TO DISPLAY PROFILE IMAGE
+  Widget displayProfileImg(screenH, screenW) {
+    return CachedNetworkImage(
+      imageUrl: ServiceProvider.profileImgFrmServer,
+      imageBuilder: (context, imageProvider) => Container(
+        height: screenH,
+        width: screenW,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: imageProvider,
+            fit: BoxFit.cover,
+          ),
+          borderRadius: BorderRadius.circular(50),
+          color: Colors.amber,
+        ),
+      ),
+      placeholder: (context, url) => const Center(
+        child: SizedBox(
+          width: 30.0,
+          height: 30.0,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) => const Icon(Icons.error),
+    );
+  }
+
+  // WIDGET USED TO DISPLAY NO INTERNET CONNECTION
+  Widget noInternetConnectionBadge(context) {
+    return Container(
+      padding: const EdgeInsets.all(0),
+      margin: const EdgeInsets.all(0),
+      color: Colors.redAccent.shade700,
+      width: MediaQuery.of(context).size.width,
+      child: Center(
+        child: Text(
+          'No Internet Connection',
+          style: ServiceProvider.smBoldFontName,
+        ),
+      ),
+    );
+  }
+
   uploadProfilePix(context, token, File imageFile) async {
     var serverRes = '';
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+        hudLoadingEffect(context, true);
 
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse(
-          "${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_set_updateAcct/"),
-    );
-    Map<String, String> headers = {
-      "Authorization": "Token $token",
-      "Content-type": "multipart/form-data"
-    };
-    if (imageFile.path != '') {
-      request.files.add(
-        http.MultipartFile(
-          'image',
-          imageFile.readAsBytes().asStream(),
-          imageFile.lengthSync(),
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse(
+              "${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_set_updateAcct/"),
+        );
+        Map<String, String> headers = {
+          "Authorization": "Token $token",
+          "Content-type": "multipart/form-data"
+        };
+        if (imageFile.path != '') {
+          request.files.add(
+            http.MultipartFile(
+              'image',
+              imageFile.readAsBytes().asStream(),
+              imageFile.lengthSync(),
 
-          filename: imageFile.path.split('/').last,
-          // contentType: MediaType('image','jpeg'),
-        ),
-      );
-    }
+              filename: imageFile.path.split('/').last,
+              // contentType: MediaType('image','jpeg'),
+            ),
+          );
+        }
 
-    request.headers.addAll(headers);
+        request.headers.addAll(headers);
 
-    var response = await request.send();
+        var response = await request.send();
 
-    if (response.statusCode == 200) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
-      serverRes = await response.stream.bytesToString();
+        if (response.statusCode == 200) {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          hudLoadingEffect(context, false);
+          serverRes = await response.stream.bytesToString();
 
-      print(serverRes);
-      // var serverResponse = json.decode(response);
-      //   serverReply = serverResponse;
+          print(serverRes);
+          // var serverResponse = json.decode(response);
+          //   serverReply = serverResponse;
+        } else {
+          serverRes = await response.stream.bytesToString();
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          hudLoadingEffect(context, false);
+          print(serverRes);
+        }
+      } catch (error) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+        serverRes = error.toString();
+      }
     } else {
-      serverRes = await response.stream.bytesToString();
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
-      print(serverRes);
+      serverRes = noInternetMsg;
     }
 
     return serverRes;
   }
 
   Future getServiceProvider(context, String token) async {
-    // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
-    hudLoadingEffect(context, true);
     var serverResponse;
-    var response = await http.get(
-      Uri.parse(
-          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_dataSubscription/'),
-      // body: json.encode(),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",
-      },
-      // encoding: Encoding.getByName("utf-8")
-    ).timeout(const Duration(seconds: 60));
-
-    if (response.statusCode == 200) {
-      serverResponse = json.decode(response.body);
+    try {
+      // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
+      hudLoadingEffect(context, true);
+      var response = await http.get(
+        Uri.parse(
+            '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_dataSubscription/'),
+        // body: json.encode(),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Token $token",
+        },
+        // encoding: Encoding.getByName("utf-8")
+      ).timeout(const Duration(seconds: 60));
+      if (response.statusCode == 200) {
+        serverResponse = json.decode(response.body);
+      }
+      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+      hudLoadingEffect(context, false);
+    } catch (error) {
+      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+      hudLoadingEffect(context, false);
+      serverResponse = {
+        'isSuccess': false,
+        'errorMsg': error,
+      };
     }
-    // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-    hudLoadingEffect(context, false);
     return serverResponse;
   }
 
   // SIGN OUT USER ACCOUNT
-  Future signOutAcct(String token) async {
+  Future signOutAcct(context, String token) async {
     var serverResponse;
-    var response = await http.post(
-      Uri.parse('${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_logoutUser/'),
-      // body: json.encode(),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",
-      },
-      // encoding: Encoding.getByName("utf-8")
-    ).timeout(const Duration(seconds: 60));
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, true);
+        var response = await http.post(
+          Uri.parse(
+              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_logoutUser/'),
+          // body: json.encode(),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Token $token",
+          },
+          // encoding: Encoding.getByName("utf-8")
+        ).timeout(const Duration(seconds: 60));
 
-    if (response.statusCode == 200) {
-      serverResponse = json.decode(response.body);
+        if (response.statusCode == 200) {
+          serverResponse = json.decode(response.body);
+        }
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+      } catch (error) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+        serverResponse = {'isSuccess': false, 'errorMsg': error};
+      }
+    } else {
+      serverResponse = {'isSuccess': false, 'errorMsg': noInternetMsg};
     }
+
     return serverResponse;
   }
 
   // GET ACCOUNT PROFILE
   Future acctProfile(String token) async {
     var serverResponse = {};
-    var response = await http.post(
-      Uri.parse(
-          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_getProfileInfo/'),
-      // body: json.encode(),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",
-      },
-      // encoding: Encoding.getByName("utf-8")
-    ).timeout(const Duration(seconds: 60));
+    try {
+      var response = await http.post(
+        Uri.parse(
+            '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_getProfileInfo/'),
+        // body: json.encode(),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Token $token",
+        },
+        // encoding: Encoding.getByName("utf-8")
+      ).timeout(const Duration(seconds: 60));
 
-    if (response.statusCode == 200) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      // serviceProvider.isLoadDialogBox = false;
-      // serviceProvider.buildShowDialog(context);
+      if (response.statusCode == 200) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        // serviceProvider.isLoadDialogBox = false;
+        // serviceProvider.buildShowDialog(context);
 
-      serverResponse = json.decode(response.body);
-      if (serverResponse['isSuccess'] == true) {
-        isShowBal = serverResponse['userProfile']['isBalVisible'];
-        notifyListeners();
+        serverResponse = json.decode(response.body);
+        if (serverResponse['isSuccess'] == true) {
+          isShowBal = serverResponse['userProfile']['isBalVisible'];
+          notifyListeners();
+        }
       }
+    } catch (error) {
+      serverResponse = {'isSuccess': false, 'errorMsg': error};
     }
     return serverResponse;
   }
@@ -1020,38 +1119,49 @@ class ServiceProvider extends ChangeNotifier {
   // SET/UPDATE ACCOUNT PROFILE
   Future setUpdateAcct(context, String token, Map data) async {
     var serverResponse;
-    // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
-    hudLoadingEffect(context, true);
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, true);
 
-    // Map data = {'call': call, '_isShowAcctBal': isShowAcctBal};
+        var response = await http
+            .post(
+              Uri.parse(
+                  '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_set_updateAcct/'),
+              // body: json.encode(),
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Token $token",
+              },
+              // encoding: Encoding.getByName("utf-8")
+              body: jsonEncode(data),
+            )
+            .timeout(const Duration(seconds: 60));
 
-    var response = await http
-        .post(
-          Uri.parse(
-              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_set_updateAcct/'),
-          // body: json.encode(),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Token $token",
-          },
-          // encoding: Encoding.getByName("utf-8")
-          body: jsonEncode(data),
-        )
-        .timeout(const Duration(seconds: 60));
+        if (response.statusCode == 200) {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          hudLoadingEffect(context, false);
 
-    if (response.statusCode == 200) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
+          serverResponse = json.decode(response.body);
+          isShowBal = serverResponse['isBalVisible'];
+        } else {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          hudLoadingEffect(context, false);
 
-      serverResponse = json.decode(response.body);
-      isShowBal = serverResponse['isBalVisible'];
+          showErrorToast(context, 'Fail to update');
+        }
+        notifyListeners();
+      } catch (error) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+        serverResponse = {'isSuccess': false, 'errorMsg': error};
+      }
     } else {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
-
-      showErrorToast(context, 'Fail to update');
+      serverResponse = {'isSuccess': false, 'errorMsg': noInternetMsg};
     }
-    notifyListeners();
+
     return serverResponse;
   }
 
@@ -1059,40 +1169,52 @@ class ServiceProvider extends ChangeNotifier {
   Future changeUserPin(
       context, String token, email, name, oldPin, newPin) async {
     var serverResponse = {};
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+        hudLoadingEffect(context, true);
 
-    Map<String, dynamic> data = {
-      'email': email,
-      'userName': name,
-      'oldPin': oldPin,
-      'newPin': newPin,
-    };
+        Map<String, dynamic> data = {
+          'email': email,
+          'userName': name,
+          'oldPin': oldPin,
+          'newPin': newPin,
+        };
 
-    var response = await http
-        .post(
-            Uri.parse(
-                '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_secure_pin/'),
-            body: json.encode(data),
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": "Token $token",
-            },
-            encoding: Encoding.getByName("utf-8"))
-        .timeout(const Duration(seconds: 60));
+        var response = await http
+            .post(
+                Uri.parse(
+                    '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_secure_pin/'),
+                body: json.encode(data),
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": "Token $token",
+                },
+                encoding: Encoding.getByName("utf-8"))
+            .timeout(const Duration(seconds: 60));
 
-    if (response.statusCode == 200) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
+        if (response.statusCode == 200) {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          hudLoadingEffect(context, false);
 
-      var _serverResponse = json.decode(response.body);
-      serverResponse = _serverResponse;
+          var _serverResponse = json.decode(response.body);
+          serverResponse = _serverResponse;
+        } else {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          hudLoadingEffect(context, false);
+
+          var _serverResponse = json.decode(response.body);
+          serverResponse = _serverResponse;
+        }
+      } catch (error) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+        serverResponse = {'isSuccess': false, 'errorMsg': error};
+      }
     } else {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
-
-      var _serverResponse = json.decode(response.body);
-      serverResponse = _serverResponse;
+      serverResponse = {'isSuccess': false, 'errorMsg': noInternetMsg};
     }
     return serverResponse;
   }
@@ -1100,117 +1222,136 @@ class ServiceProvider extends ChangeNotifier {
   // ============= CHANGE PASSWORD ============
   Future changePassword(context, token, email, name, oldPassword, newPassword1,
       newPassword2) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
     Map serverResp = {};
-    var data = {
-      'old_password': oldPassword,
-      'new_password1': newPassword1,
-      'new_password2': newPassword2,
-      'email': email,
-      'userName': name,
-    };
-    var response = await http.post(
-      Uri.parse(
-          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_changePassword/'),
-      body: jsonEncode(data),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",
-      },
-    );
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+        hudLoadingEffect(context, true);
+        var data = {
+          'old_password': oldPassword,
+          'new_password1': newPassword1,
+          'new_password2': newPassword2,
+          'email': email,
+          'userName': name,
+        };
+        var response = await http.post(
+          Uri.parse(
+              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_changePassword/'),
+          body: jsonEncode(data),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Token $token",
+          },
+        );
 
-    try {
-      if (response.statusCode == 200) {
+        if (response.statusCode == 200) {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          hudLoadingEffect(context, false);
+          var serverResponse = json.decode(response.body);
+          serverResp = serverResponse;
+        }
+      } catch (error) {
         // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
         hudLoadingEffect(context, false);
-        var serverResponse = json.decode(response.body);
-        serverResp = serverResponse;
+        serverResp = {'isSuccess': false, 'errorMsg': error};
       }
-    } catch (error) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
-      rethrow;
+    } else {
+      serverResp = {'isSuccess': false, 'errorMsg': noInternetMsg};
     }
     return serverResp;
   }
 
   // ============= DELETE(DEACTIVATE) ACCOUNT ============
   Future deactivateAcct(context, token, email, password) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
     Map serverResp = {};
-    var data = {
-      'password': password,
-      'email': email,
-    };
-    var response = await http.post(
-      Uri.parse(
-          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_deactivateAccount/'),
-      body: jsonEncode(data),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",
-      },
-    );
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+        hudLoadingEffect(context, true);
+        var data = {
+          'password': password,
+          'email': email,
+        };
+        var response = await http.post(
+          Uri.parse(
+              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_deactivateAccount/'),
+          body: jsonEncode(data),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Token $token",
+          },
+        );
 
-    try {
-      if (response.statusCode == 200) {
+        if (response.statusCode == 200) {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          hudLoadingEffect(context, false);
+          var serverResponse = json.decode(response.body);
+          serverResp = serverResponse;
+        }
+      } catch (error) {
         // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
         hudLoadingEffect(context, false);
-        var serverResponse = json.decode(response.body);
-        serverResp = serverResponse;
+        serverResp = {'isSuccess': false, 'errorMsg': error};
       }
-    } catch (error) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
-      rethrow;
+    } else {
+      serverResp = {'isSuccess': false, 'errorMsg': noInternetMsg};
     }
+
     return serverResp;
   }
 
   Future sendEmail(
       context, name, subject, emailBody, userEmail, userPhoneNo) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
     Map serverResp = {};
-    try {
-      final url = Uri.parse("${dotenv.env['EMAIL_URL']}");
-      var serviceId = "${dotenv.env['SERVICE_ID']}";
-      var templateId = "${dotenv.env['TEMPLATE_ID']}";
-      var userId = "${dotenv.env['USER_ID']}";
-      final response = await http
-          .post(
-            url,
-            headers: {'Content-Type': 'application/json'},
-            body: json.encode({
-              "service_id": serviceId,
-              "template_id": templateId,
-              "user_id": userId,
-              "template_params": {
-                "to_name": name,
-                "subject": subject,
-                "message":
-                    '$emailBody Customer Email & Phone No: $userEmail & $userPhoneNo',
-                "reply_to": "${dotenv.env['REPLY_TO']}"
-              }
-            }),
-          )
-          .timeout(const Duration(seconds: 20));
-      if (response.statusCode == 200) {
-        serverResp['errorMsg'] = '';
-        serverResp['statusCode'] = 200;
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+      hudLoadingEffect(context, true);
+      try {
+        final url = Uri.parse("${dotenv.env['EMAIL_URL']}");
+        var serviceId = "${dotenv.env['SERVICE_ID']}";
+        var templateId = "${dotenv.env['TEMPLATE_ID']}";
+        var userId = "${dotenv.env['USER_ID']}";
+        final response = await http
+            .post(
+              url,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                "service_id": serviceId,
+                "template_id": templateId,
+                "user_id": userId,
+                "template_params": {
+                  "to_name": name,
+                  "subject": subject,
+                  "message":
+                      '$emailBody Customer Email & Phone No: $userEmail & $userPhoneNo',
+                  "reply_to": "${dotenv.env['REPLY_TO']}"
+                }
+              }),
+            )
+            .timeout(const Duration(seconds: 20));
+        if (response.statusCode == 200) {
+          serverResp['errorMsg'] = '';
+          serverResp['statusCode'] = 200;
+        }
+      } on Exception catch (e) {
+        serverResp['errorMsg'] = e;
+        serverResp['statusCode'] = '';
+      } catch (error) {
+        serverResp['errorMsg'] = error;
+        serverResp['statusCode'] = '';
       }
-    } on Exception catch (e) {
-      serverResp['errorMsg'] = e;
-      serverResp['statusCode'] = '';
-    } catch (error) {
-      serverResp['errorMsg'] = error;
-      serverResp['statusCode'] = '';
-    }
 
-    // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-    hudLoadingEffect(context, false);
+      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+      hudLoadingEffect(context, false);
+    } else {
+      serverResp = {'statusCode': '', 'errorMsg': noInternetMsg};
+    }
 
     return serverResp;
   }
@@ -1218,36 +1359,42 @@ class ServiceProvider extends ChangeNotifier {
   // REQUEST TO LOGIN WITH BIOMETRICS
   // IF BIOMETRIC IS CORRECT, USE THE EMAIL & NAME TO GET TOKEN
   Future authenticateWithBiometrics(context, email, name) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
     Map serverResp = {};
-    var data = {
-      'email': email,
-      'userName': name,
-    };
-    var response = await http
-        .post(
-          Uri.parse(
-              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_authenticateWithBiometrics/'),
-          body: jsonEncode(data),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          encoding: Encoding.getByName("utf-8"),
-        )
-        .timeout(const Duration(seconds: 60));
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+        hudLoadingEffect(context, true);
+        var data = {
+          'email': email,
+          'userName': name,
+        };
+        var response = await http
+            .post(
+              Uri.parse(
+                  '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_authenticateWithBiometrics/'),
+              body: jsonEncode(data),
+              headers: {
+                "Content-Type": "application/json",
+              },
+              encoding: Encoding.getByName("utf-8"),
+            )
+            .timeout(const Duration(seconds: 60));
 
-    try {
-      if (response.statusCode == 200) {
+        if (response.statusCode == 200) {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          hudLoadingEffect(context, false);
+          var serverResponse = json.decode(response.body);
+          serverResp = serverResponse;
+        }
+      } catch (error) {
         // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
         hudLoadingEffect(context, false);
-        var serverResponse = json.decode(response.body);
-        serverResp = serverResponse;
+        serverResp = {'isSuccess': false, 'errorMsg': error};
       }
-    } catch (error) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
-      rethrow;
+    } else {
+      serverResp = {'statusCode': '', 'errorMsg': noInternetMsg};
     }
     return serverResp;
   }
@@ -1267,155 +1414,206 @@ class ServiceProvider extends ChangeNotifier {
       dataAmt,
       isNumSetAsDefault,
       serviceProvided) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
-    Map serverResp = {};
-    var data = {
-      'email': email,
-      'userName': name,
-      'pin': pin,
-      'call': call,
-      'requestedAmt': double.parse(requestedAmt),
-      'mobileTransNo': mobileTransNo,
-      'providerChoice': providerChoice,
-      'subscriptionId': subscriptionId,
-      'dataAmt': dataAmt,
-      'isNumSetAsDefault': isNumSetAsDefault,
-      'serviceProvided': serviceProvided,
-    };
-    var response = await http
-        .post(
-          Uri.parse(
-              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_processTransaction/'),
-          body: jsonEncode(data),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          encoding: Encoding.getByName("utf-8"),
-        )
-        .timeout(const Duration(seconds: 60));
+    // CHECK IF WE HAVE INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+      hudLoadingEffect(context, true);
+      Map serverResp = {};
+      try {
+        var data = {
+          'email': email,
+          'userName': name,
+          'pin': pin,
+          'call': call,
+          'requestedAmt': double.parse(requestedAmt),
+          'mobileTransNo': mobileTransNo,
+          'providerChoice': providerChoice,
+          'subscriptionId': subscriptionId,
+          'dataAmt': dataAmt,
+          'isNumSetAsDefault': isNumSetAsDefault,
+          'serviceProvided': serviceProvided,
+        };
+        var response = await http
+            .post(
+              Uri.parse(
+                  '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_processTransaction/'),
+              body: jsonEncode(data),
+              headers: {
+                "Content-Type": "application/json",
+              },
+              encoding: Encoding.getByName("utf-8"),
+            )
+            .timeout(const Duration(seconds: 60));
 
-    try {
-      if (response.statusCode == 200) {
+        if (response.statusCode == 200) {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          hudLoadingEffect(context, false);
+          var serverResponse = json.decode(response.body);
+          serverResp = serverResponse;
+        }
+      } catch (error) {
         // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
         hudLoadingEffect(context, false);
-        var serverResponse = json.decode(response.body);
-        serverResp = serverResponse;
+        serverResp = {'isSuccess': false, 'errorMsg': error};
       }
-    } catch (error) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
-      rethrow;
+      return serverResp;
+    } else {
+      popWarningErrorMsg(context, 'Internet Connection', noInternetMsg);
     }
-    return serverResp;
   }
 
   // GET TRANSACTION
   Future transAcctHistory(context, String token) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
     var serverResponse = {};
-    var response = await http.post(
-      Uri.parse(
-          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_acctTransactionLog/'),
-      // body: json.encode(),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",
-      },
-    ).timeout(const Duration(seconds: 60));
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+        hudLoadingEffect(context, true);
 
-    if (response.statusCode == 200) {
-      serverResponse = json.decode(response.body);
-      if (serverResponse['isSuccess'] == true) {
-        // isShowBal = serverResponse['userProfile']['isBalVisible'];
-        // notifyListeners();
+        var response = await http.post(
+          Uri.parse(
+              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_acctTransactionLog/'),
+          // body: json.encode(),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Token $token",
+          },
+        ).timeout(const Duration(seconds: 60));
+
+        if (response.statusCode == 200) {
+          serverResponse = json.decode(response.body);
+          if (serverResponse['isSuccess'] == true) {
+            // isShowBal = serverResponse['userProfile']['isBalVisible'];
+            // notifyListeners();
+          }
+        }
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+      } catch (error) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+        serverResponse = {'isSuccess': false, 'errorMsg': error};
       }
+    } else {
+      serverResponse = {'isSuccess': false, 'errorMsg': noInternetMsg};
     }
-    // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-    hudLoadingEffect(context, false);
     return serverResponse;
   }
 
   // GET ACCOUNT STATEMENT
   Future getAcctStatement(context, String token, startDate, endDate) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
-
-    var data = {
-      'startDate': formatDateWithDash(startDate),
-      'endDate': formatDateWithDash(endDate),
-    };
     var serverResponse = {};
-    var response = await http.post(
-      Uri.parse('${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_acctStatement/'),
-      body: jsonEncode(data),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",
-      },
-    ).timeout(const Duration(seconds: 60));
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+        hudLoadingEffect(context, true);
 
-    if (response.statusCode == 200) {
-      serverResponse = json.decode(response.body);
-      if (serverResponse['isSuccess'] == true) {}
+        var data = {
+          'startDate': formatDateWithDash(startDate),
+          'endDate': formatDateWithDash(endDate),
+        };
+        var response = await http.post(
+          Uri.parse(
+              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_acctStatement/'),
+          body: jsonEncode(data),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Token $token",
+          },
+        ).timeout(const Duration(seconds: 60));
+
+        if (response.statusCode == 200) {
+          serverResponse = json.decode(response.body);
+          if (serverResponse['isSuccess'] == true) {}
+        }
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+      } catch (error) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+        serverResponse = {'isSuccess': false, 'errorMsg': error};
+      }
+    } else {
+      serverResponse = {'isSuccess': false, 'errorMsg': noInternetMsg};
     }
-    // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-    hudLoadingEffect(context, false);
     return serverResponse;
   }
 
   // MAKE PAYMENT (CUSTOMER CREDIT THEIR WALLET)
   Future creditCustomerWallet(context, Map record, token) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
-
     var serverResponse = {};
-    var response = await http.post(
-      Uri.parse(
-          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_creditCusWallet/'),
-      body: jsonEncode(record),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",
-      },
-    ).timeout(const Duration(seconds: 60));
+    try {
+      // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+      hudLoadingEffect(context, true);
 
-    if (response.statusCode == 200) {
-      serverResponse = json.decode(response.body);
-      if (serverResponse['isSuccess'] == true) {}
+      var response = await http.post(
+        Uri.parse(
+            '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_creditCusWallet/'),
+        body: jsonEncode(record),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Token $token",
+        },
+      ).timeout(const Duration(seconds: 60));
+
+      if (response.statusCode == 200) {
+        serverResponse = json.decode(response.body);
+        if (serverResponse['isSuccess'] == true) {}
+      }
+      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+      hudLoadingEffect(context, false);
+    } catch (error) {
+      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+      hudLoadingEffect(context, false);
+      serverResponse = {'isSuccess': false, 'errorMsg': error};
     }
-    // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-    hudLoadingEffect(context, false);
     return serverResponse;
   }
 
   // GET REFERRALS
   Future getReferrals(context, String token, email, val, call) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    hudLoadingEffect(context, true);
-
-    var data = {
-      'email': email,
-      'val': val,
-      'call': call,
-    };
     var serverResponse = {};
-    var response = await http.post(
-      Uri.parse('${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_referrals/'),
-      body: jsonEncode(data),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",
-      },
-    ).timeout(const Duration(seconds: 60));
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+        hudLoadingEffect(context, true);
 
-    if (response.statusCode == 200) {
-      serverResponse = json.decode(response.body);
-      if (serverResponse['isSuccess'] == true) {}
+        var data = {
+          'email': email,
+          'val': val,
+          'call': call,
+        };
+        var response = await http.post(
+          Uri.parse('${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_referrals/'),
+          body: jsonEncode(data),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Token $token",
+          },
+        ).timeout(const Duration(seconds: 60));
+
+        if (response.statusCode == 200) {
+          serverResponse = json.decode(response.body);
+          if (serverResponse['isSuccess'] == true) {}
+        }
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+      } catch (error) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+        serverResponse = {'isSuccess': false, 'errorMsg': error};
+      }
+    } else {
+      serverResponse = {'isSuccess': false, 'errorMsg': noInternetMsg};
     }
-    // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-    hudLoadingEffect(context, false);
+
     return serverResponse;
   }
 }
