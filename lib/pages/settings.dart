@@ -124,10 +124,7 @@ class _AccountSettingsState extends State<AccountSettings> {
                           if (ServiceProvider.profileImgFrmServer != '' &&
                               ServiceProvider.profileImgFrmServer !=
                                   dotenv.env['URL_ENDPOINT'])
-                            serviceProvider.displayProfileImg(
-                              (screenH * 7.5) / 100,
-                              (screenW * 15) / 100,
-                            )
+                            serviceProvider.displayProfileImg(context)
                           // CircleAvatar(
                           //     radius: 30,
                           //     backgroundImage: NetworkImage(
@@ -261,7 +258,7 @@ class _AccountSettingsState extends State<AccountSettings> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
                                 borderRadius:
-                                    BorderRadius.all(Radius.circular(12)),
+                                    const BorderRadius.all(Radius.circular(12)),
                                 border: Border.all(
                                   color: ServiceProvider.redWarningColor,
                                   width: 0.7,
@@ -269,7 +266,8 @@ class _AccountSettingsState extends State<AccountSettings> {
                             child: Column(
                               children: [
                                 Container(
-                                  margin: EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                  margin:
+                                      const EdgeInsets.fromLTRB(12, 0, 12, 12),
                                   decoration: BoxDecoration(
                                       color: themeManager.currentTheme ==
                                               ThemeMode.light
@@ -377,7 +375,8 @@ class _AccountSettingsState extends State<AccountSettings> {
                                 // ),
 
                                 Container(
-                                  margin: EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                  margin:
+                                      const EdgeInsets.fromLTRB(12, 0, 12, 12),
                                   decoration: BoxDecoration(
                                       color: themeManager.currentTheme ==
                                               ThemeMode.light
@@ -479,7 +478,8 @@ class _AccountSettingsState extends State<AccountSettings> {
                                 ),
 
                                 Container(
-                                  margin: EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                  margin:
+                                      const EdgeInsets.fromLTRB(12, 0, 12, 12),
                                   decoration: BoxDecoration(
                                       color: themeManager.currentTheme ==
                                               ThemeMode.light
@@ -704,7 +704,7 @@ class _AccountSettingsState extends State<AccountSettings> {
                               left: 50,
                               top: 12,
                               child: Container(
-                                padding: EdgeInsets.only(
+                                padding: const EdgeInsets.only(
                                     bottom: 1, left: 10, right: 10),
                                 color:
                                     themeManager.currentTheme == ThemeMode.light
@@ -736,7 +736,7 @@ class _AccountSettingsState extends State<AccountSettings> {
   Widget listTileLayout(
       IconData icon, String listName, Color color, IconData trailingIcon) {
     return Container(
-      margin: EdgeInsets.fromLTRB(12, 0, 12, 12),
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       decoration: BoxDecoration(
           color: themeManager.currentTheme == ThemeMode.light
               ? Colors.black.withOpacity(0.05)

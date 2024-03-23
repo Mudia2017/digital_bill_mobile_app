@@ -171,10 +171,7 @@ class _AuthenticatePinState extends State<AuthenticatePin> {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         if (ServiceProvider.profileImgFrmServer != '')
-          serviceProvider.displayProfileImg(
-            (screenH * 7.5) / 100,
-            (screenW * 15) / 100,
-          )
+          serviceProvider.displayProfileImg(context)
         // CircleAvatar(
         //     radius: 30,
         //     backgroundImage:

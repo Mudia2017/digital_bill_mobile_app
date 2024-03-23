@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:digital_mobile_bill/components/service_provider.dart';
 import 'package:digital_mobile_bill/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
@@ -390,8 +391,8 @@ class _ReferralCodeState extends State<ReferralCode>
                                 dotenv.env['URL_ENDPOINT'])
                               CircleAvatar(
                                 radius: 30,
-                                backgroundImage:
-                                    NetworkImage(referrals[x]['profileImg']),
+                                backgroundImage: NetworkImage(
+                                    referrals[x]['profileImg'].toString()),
                               )
                             else
                               CircleAvatar(

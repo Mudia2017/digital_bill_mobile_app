@@ -1064,9 +1064,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ServiceProvider.profileImgFrmServer !=
                     dotenv.env['URL_ENDPOINT'])
               serviceProvider.displayProfileImg(
-                (screenH * 7.5) / 100,
-                (screenW * 15) / 100,
-              )
+                  // 90.0, 90.0
+                  context)
             // CircleAvatar(
             //     radius: 30,
             //     backgroundImage:

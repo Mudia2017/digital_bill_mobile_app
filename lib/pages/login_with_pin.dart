@@ -660,10 +660,7 @@ class _LoginWithPinState extends State<LoginWithPin> {
         children: [
           if (ServiceProvider.profileImgFrmServer != '' &&
               ServiceProvider.profileImgFrmServer != dotenv.env['URL_ENDPOINT'])
-            serviceProvider.displayProfileImg(
-              (screenH * 7.5) / 100,
-              (screenW * 15) / 100,
-            )
+            serviceProvider.displayProfileImg(context)
 
           // CircleAvatar(
           //   radius: 30,

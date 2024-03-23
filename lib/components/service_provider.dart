@@ -911,19 +911,18 @@ class ServiceProvider extends ChangeNotifier {
   }
 
   // WIDGET TO USED TO DISPLAY PROFILE IMAGE
-  Widget displayProfileImg(screenH, screenW) {
+  Widget displayProfileImg(context) {
     return CachedNetworkImage(
       imageUrl: ServiceProvider.profileImgFrmServer,
       imageBuilder: (context, imageProvider) => Container(
-        height: screenH,
-        width: screenW,
+        height: 60,
+        width: 60,
         decoration: BoxDecoration(
           image: DecorationImage(
             image: imageProvider,
             fit: BoxFit.cover,
           ),
           borderRadius: BorderRadius.circular(50),
-          color: Colors.amber,
         ),
       ),
       placeholder: (context, url) => const Center(
@@ -935,7 +934,10 @@ class ServiceProvider extends ChangeNotifier {
           ),
         ),
       ),
-      errorWidget: (context, url, error) => const Icon(Icons.error),
+      errorWidget: (context, url, error) => const Icon(
+        Icons.person,
+        size: 60,
+      ),
     );
   }
 
