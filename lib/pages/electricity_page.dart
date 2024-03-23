@@ -30,7 +30,7 @@ class _ElectricityPageState extends State<ElectricityPage> {
     if (serverResponse['isSuccess'] == false) {
       if (serverResponse['errorMsg'] != '') {
         serviceProvider.popWarningErrorMsg(
-            context, 'Error', serverResponse['errorMsg']);
+            context, 'Error', serverResponse['errorMsg'].toString());
       }
     } else {
       setState(() {

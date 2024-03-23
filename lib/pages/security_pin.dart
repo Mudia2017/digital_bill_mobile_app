@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:provider/provider.dart';
 
 class SecurityPin extends StatefulWidget {
@@ -36,52 +37,65 @@ class _SecurityPinState extends State<SecurityPin> {
 
   // SEND SECURITY PIN TO BACKEND
   saveUserPin(String token, pin) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    serviceProvider.hudLoadingEffect(context, true);
+    try {
+      // CHECK IF THERE IS INTERNET CONNECTION
+      if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+          InternetConnectionStatus.connected) {
+        // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+        serviceProvider.hudLoadingEffect(context, true);
 
-    Map<String, dynamic> data = {
-      'pin': pin,
-    };
+        Map<String, dynamic> data = {
+          'pin': pin,
+        };
 
-    var response = await http
-        .post(
-            Uri.parse(
-                '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_secure_pin/'),
-            body: json.encode(data),
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": "Token $token",
-            },
-            encoding: Encoding.getByName("utf-8"))
-        .timeout(const Duration(seconds: 60));
+        var response = await http
+            .post(
+                Uri.parse(
+                    '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_secure_pin/'),
+                body: json.encode(data),
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": "Token $token",
+                },
+                encoding: Encoding.getByName("utf-8"))
+            .timeout(const Duration(seconds: 60));
 
-    if (response.statusCode == 200) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      serviceProvider.hudLoadingEffect(context, false);
+        if (response.statusCode == 200) {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          serviceProvider.hudLoadingEffect(context, false);
 
-      var serverResponse = json.decode(response.body);
-      if (serverResponse['isSuccess'] == false) {
-        if (serverResponse['errorMsg'] != '') {
+          var serverResponse = json.decode(response.body);
+          if (serverResponse['isSuccess'] == false) {
+            if (serverResponse['errorMsg'] != '') {
+              serviceProvider.popWarningErrorMsg(
+                  context, 'Error', serverResponse['errorMsg'].toString());
+            }
+          } else {
+            addBiometricOtherOption();
+            // Navigator.of(context)
+            //     .pushReplacementNamed(RouteManager.homePage, arguments: {
+            //   'token': widget.token,
+            //   'name': widget.name,
+            //   'email': widget.email,
+            //   'mobile': widget.mobile,
+            //   'acctBal': '0',
+            // });
+          }
+        } else {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          serviceProvider.hudLoadingEffect(context, false);
+
           serviceProvider.popWarningErrorMsg(
-              context, 'Error', serverResponse['errorMsg'].toString());
+              context, 'Error', 'Something went wrong!!!');
         }
       } else {
-        addBiometricOtherOption();
-        // Navigator.of(context)
-        //     .pushReplacementNamed(RouteManager.homePage, arguments: {
-        //   'token': widget.token,
-        //   'name': widget.name,
-        //   'email': widget.email,
-        //   'mobile': widget.mobile,
-        //   'acctBal': '0',
-        // });
+        serviceProvider.popWarningErrorMsg(
+            context, 'Warning', ServiceProvider.noInternetMsg.toString());
       }
-    } else {
+    } catch (error) {
       // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
       serviceProvider.hudLoadingEffect(context, false);
-
-      serviceProvider.popWarningErrorMsg(
-          context, 'Error', 'Something went wrong!!!');
+      serviceProvider.popWarningErrorMsg(context, 'Error', error.toString());
     }
   }
 
@@ -107,15 +121,14 @@ class _SecurityPinState extends State<SecurityPin> {
             const SizedBox(
               height: 15,
             ),
-            Center(
-              child: Text(
-                'Create your four digit security pin. It can be used to log into your account and it will also be needed in your daily transactions.',
-                style: GoogleFonts.overlock().copyWith(
-                  color: Colors.grey,
-                  fontSize: 25,
-                  fontStyle: FontStyle.italic,
-                ),
+            Text(
+              'Create your four digit security pin. It can be used to log into your account and it will also be needed in your daily transactions.',
+              style: GoogleFonts.overlock().copyWith(
+                color: Colors.grey,
+                fontSize: 25,
+                fontStyle: FontStyle.italic,
               ),
+              textAlign: TextAlign.center,
             ),
             const Expanded(
               child: SizedBox(),

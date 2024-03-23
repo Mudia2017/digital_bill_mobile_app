@@ -12,6 +12,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:provider/provider.dart';
 
 class OTPVerification extends StatefulWidget {
   final String name, email, token, mobile;
@@ -49,6 +51,7 @@ class _OTPVerificationState extends State<OTPVerification> {
   TextEditingController pinFiveController = TextEditingController();
   int otpAttemptCount = 0;
   bool isOtpLinkBtn = true;
+  int _start = 0;
 
   var outlineInputBorder = OutlineInputBorder(
     borderRadius: BorderRadius.circular(10.0),
@@ -59,51 +62,71 @@ class _OTPVerificationState extends State<OTPVerification> {
 
   // REQUEST TO RE-GENERATE OTP VERIFICATION CODE
   resendOTPCode(String name, email, token) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    serviceProvider.hudLoadingEffect(context, true);
+    try {
+      // CHECK IF THERE IS INTERNET CONNECTION
+      if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+          InternetConnectionStatus.connected) {
+        // JUST TO ENSURE THE NUMBER OF ATTEMPT TO ENTER OPT IS RESET TO ZERO
+        otpAttemptCount = 0;
+        // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+        serviceProvider.hudLoadingEffect(context, true);
 
-    Map<String, dynamic> data = {
-      'name': name,
-      'email': email,
-    };
+        Map<String, dynamic> data = {
+          'name': name,
+          'email': email,
+        };
 
-    var response = await http
-        .post(
-            Uri.parse(
-                '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_re_generate_otp/'),
-            body: json.encode(data),
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": "Token $token",
-            },
-            encoding: Encoding.getByName("utf-8"))
-        .timeout(const Duration(seconds: 60));
+        var response = await http
+            .post(
+                Uri.parse(
+                    '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_re_generate_otp/'),
+                body: json.encode(data),
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": "Token $token",
+                },
+                encoding: Encoding.getByName("utf-8"))
+            .timeout(const Duration(seconds: 60));
 
-    if (response.statusCode == 200) {
-      var serverResponse = json.decode(response.body);
-      if (serverResponse['isSuccess'] == false) {
-        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-        serviceProvider.hudLoadingEffect(context, false);
+        if (response.statusCode == 200) {
+          var serverResponse = json.decode(response.body);
+          if (serverResponse['isSuccess'] == false) {
+            // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+            serviceProvider.hudLoadingEffect(context, false);
 
-        if (serverResponse['errorMsg'] != '') {
-          serviceProvider.popWarningErrorMsg(
-              context, 'Error', serverResponse['errorMsg'].toString());
+            if (serverResponse['errorMsg'] != '') {
+              serviceProvider.popWarningErrorMsg(
+                  context, 'Error', serverResponse['errorMsg'].toString());
+            }
+          } else {
+            var isEmail = await sendEmail(
+                widget.name,
+                serverResponse['otp_code'],
+                'OTP Verification Code',
+                widget.email);
+
+            // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+            serviceProvider.hudLoadingEffect(context, false);
+
+            setState(() {
+              widget.otpSecretKey = serverResponse['otp_secret_key'];
+              widget.otpValidDate = serverResponse['otp_valid_date'];
+            });
+          }
+        } else {
+          // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+          serviceProvider.hudLoadingEffect(context, false);
+          serviceProvider.showErrorToast(
+              context, 'Unable to connect with the server!');
         }
       } else {
-        var isEmail = await sendEmail(widget.name, serverResponse['otp_code'],
-            'OTP Verification Code', widget.email);
-
-        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-        serviceProvider.hudLoadingEffect(context, false);
-
-        setState(() {
-          widget.otpSecretKey = serverResponse['otp_secret_key'];
-          widget.otpValidDate = serverResponse['otp_valid_date'];
-        });
+        serviceProvider.popWarningErrorMsg(
+            context, 'Warning', ServiceProvider.noInternetMsg);
       }
-    } else {
+    } catch (error) {
       // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
       serviceProvider.hudLoadingEffect(context, false);
+      serviceProvider.popWarningErrorMsg(context, 'Error', error.toString());
     }
   }
 
@@ -142,6 +165,10 @@ class _OTPVerificationState extends State<OTPVerification> {
         setState(() {
           serviceProvider.showToast(context, 'OTP code sent to your email.');
         });
+      } else {
+        // UNABLE TO SEND EMAIL
+        serviceProvider.showErrorToast(
+            context, 'We were unable to send OTP code to the email provided!');
       }
     } on Exception catch (e) {
       serverResp['errorMsg'] = e;
@@ -168,7 +195,7 @@ class _OTPVerificationState extends State<OTPVerification> {
       'otp_secret_key': otpSecretKey,
       'otp_valid_date': otpValidDate,
     };
-
+    print('OTP PIN: $otp');
     var response = await http.post(
         Uri.parse('${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_confirm_otp/'),
         body: json.encode(data),
@@ -194,6 +221,7 @@ class _OTPVerificationState extends State<OTPVerification> {
         pinThreeController.clear();
         pinFourController.clear();
         pinFiveController.clear();
+
         setState(() {
           otpAttemptCount = 1;
           isOtpLinkBtn = false;
@@ -229,7 +257,6 @@ class _OTPVerificationState extends State<OTPVerification> {
   }
 
   late Timer _timer = Timer(const Duration(milliseconds: 1), () {});
-  int _start = 0;
 
   startTimer() {
     const oneSec = Duration(seconds: 1);
@@ -261,6 +288,7 @@ class _OTPVerificationState extends State<OTPVerification> {
 
   @override
   Widget build(BuildContext context) {
+    double screenH = MediaQuery.of(context).size.height;
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -294,8 +322,8 @@ class _OTPVerificationState extends State<OTPVerification> {
                   ),
                   child: Column(
                     children: [
-                      const SizedBox(
-                        height: 60,
+                      SizedBox(
+                        height: (screenH * 5) / 100,
                       ),
                       Icon(
                         Icons.email,
@@ -315,12 +343,13 @@ class _OTPVerificationState extends State<OTPVerification> {
                       Container(
                         padding: const EdgeInsets.fromLTRB(35, 25, 35, 0),
                         child: Text(
-                          'Hello ${widget.name}, OTP verification code have been sent to your email',
+                          'Hello ${widget.name}, your one time OTP verification code have been sent to your email',
                           style: TextStyle(
                             fontSize: 18,
                             color: Colors.blue.shade200,
                             fontWeight: FontWeight.bold,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                       Text(

@@ -30,7 +30,7 @@ class _InternetPageState extends State<InternetPage> {
     if (serverResponse['isSuccess'] == false) {
       if (serverResponse['errorMsg'] != '') {
         serviceProvider.popWarningErrorMsg(
-            context, 'Error', serverResponse['errorMsg']);
+            context, 'Error', serverResponse['errorMsg'].toString());
       }
     } else {
       setState(() {

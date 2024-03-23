@@ -1018,32 +1018,39 @@ class ServiceProvider extends ChangeNotifier {
 
   Future getServiceProvider(context, String token) async {
     var serverResponse;
-    try {
-      // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, true);
-      var response = await http.get(
-        Uri.parse(
-            '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_dataSubscription/'),
-        // body: json.encode(),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Token $token",
-        },
-        // encoding: Encoding.getByName("utf-8")
-      ).timeout(const Duration(seconds: 60));
-      if (response.statusCode == 200) {
-        serverResponse = json.decode(response.body);
+    // CHECK IF THERE IS INTERNET CONNECTION
+    if (Provider.of<InternetConnectionStatus>(context, listen: false) ==
+        InternetConnectionStatus.connected) {
+      try {
+        // CALL THE DIALOG TO PREVENT USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, true);
+        var response = await http.get(
+          Uri.parse(
+              '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_dataSubscription/'),
+          // body: json.encode(),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Token $token",
+          },
+          // encoding: Encoding.getByName("utf-8")
+        ).timeout(const Duration(seconds: 60));
+        if (response.statusCode == 200) {
+          serverResponse = json.decode(response.body);
+        }
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+      } catch (error) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        hudLoadingEffect(context, false);
+        serverResponse = {
+          'isSuccess': false,
+          'errorMsg': error,
+        };
       }
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
-    } catch (error) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      hudLoadingEffect(context, false);
-      serverResponse = {
-        'isSuccess': false,
-        'errorMsg': error,
-      };
+    } else {
+      serverResponse = {'isSuccess': false, 'errorMsg': noInternetMsg};
     }
+
     return serverResponse;
   }
 
