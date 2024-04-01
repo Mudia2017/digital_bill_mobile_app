@@ -64,134 +64,144 @@ class _LoginWithPinState extends State<LoginWithPin> {
 
   // GET PROFILE PICTURE
   Future acctProfilePix(String email) async {
-    Map data = {'email': email};
-    var serverResponse = {};
-    var response = await http.post(
-      Uri.parse(
-          '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_acctProfilePix/'),
-      body: jsonEncode(data),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      // encoding: Encoding.getByName("utf-8")
-    ).timeout(const Duration(seconds: 60));
+    try {
+      Map data = {'email': email};
+      var serverResponse = {};
+      var response = await http.post(
+        Uri.parse(
+            '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_acctProfilePix/'),
+        body: jsonEncode(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // encoding: Encoding.getByName("utf-8")
+      ).timeout(const Duration(seconds: 60));
 
-    if (response.statusCode == 200) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      // serviceProvider.isLoadDialogBox = false;
-      // serviceProvider.buildShowDialog(context);
+      if (response.statusCode == 200) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        // serviceProvider.isLoadDialogBox = false;
+        // serviceProvider.buildShowDialog(context);
 
-      serverResponse = json.decode(response.body);
-      if (serverResponse['isSuccess'] == true) {
-        if (serverResponse['image'] == dotenv.env['URL_ENDPOINT']) {
-          setState(() {
-            ServiceProvider.profileImgFrmServer = '';
-          });
-        } else {
-          setState(() {
-            ServiceProvider.profileImgFrmServer = serverResponse['image'];
-          });
+        serverResponse = json.decode(response.body);
+        if (serverResponse['isSuccess'] == true) {
+          if (serverResponse['image'] == dotenv.env['URL_ENDPOINT']) {
+            setState(() {
+              ServiceProvider.profileImgFrmServer = '';
+            });
+          } else {
+            setState(() {
+              ServiceProvider.profileImgFrmServer = serverResponse['image'];
+            });
+          }
         }
       }
+    } catch (error) {
+      print(error.toString());
     }
   }
 
   // SEND SECURITY PIN TO BACKEND
   authenticateUserPin(String email, userName, pin) async {
-    // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
-    serviceProvider.hudLoadingEffect(context, true);
+    try {
+      // CALL THE DIALOG TO PREVENT USER FROM THE UI UNTIL DATA IS SAVED TO THE SERVER
+      serviceProvider.hudLoadingEffect(context, true);
 
-    Map<String, dynamic> data = {
-      'email': email,
-      'userName': userName,
-      'pin': pin,
-    };
+      Map<String, dynamic> data = {
+        'email': email,
+        'userName': userName,
+        'pin': pin,
+      };
 
-    var response = await http
-        .post(
-            Uri.parse(
-                '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_login_with_pin/'),
-            body: json.encode(data),
-            headers: {
-              "Content-Type": "application/json",
-            },
-            encoding: Encoding.getByName("utf-8"))
-        .timeout(const Duration(seconds: 60));
+      var response = await http
+          .post(
+              Uri.parse(
+                  '${dotenv.env['URL_ENDPOINT']}/api/v1/main/api_login_with_pin/'),
+              body: json.encode(data),
+              headers: {
+                "Content-Type": "application/json",
+              },
+              encoding: Encoding.getByName("utf-8"))
+          .timeout(const Duration(seconds: 60));
 
-    if (response.statusCode == 200) {
-      // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
-      serviceProvider.hudLoadingEffect(context, false);
+      if (response.statusCode == 200) {
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        serviceProvider.hudLoadingEffect(context, false);
 
-      var serverResponse = json.decode(response.body);
-      if (serverResponse['isSuccess'] == false) {
-        if (serverResponse['errorMsg'] != '') {
-          if (serverResponse['errorMsg'] == 'Pin is incorrect') {
-            await tooMuchLoginAttempt();
+        var serverResponse = json.decode(response.body);
+        if (serverResponse['isSuccess'] == false) {
+          if (serverResponse['errorMsg'] != '') {
+            if (serverResponse['errorMsg'] == 'Pin is incorrect') {
+              await tooMuchLoginAttempt();
+            }
+            pinIndex = 0;
+            pinOneController.clear();
+            pinTwoController.clear();
+            pinThreeController.clear();
+            pinFourController.clear();
+            if (loginAttemptCount > 4) {
+              setState(() {
+                isActiveBtn = false;
+                _start = 10 * loginAttemptCount;
+                startTimer();
+              });
+            } else if (loginAttemptCount > 2) {
+              String count = '';
+              if (loginAttemptCount == 3) {
+                count = 'Two more';
+              } else if (loginAttemptCount == 4) {
+                count = 'One more';
+              } else {
+                count = 'Last';
+              }
+              serviceProvider.popWarningErrorMsg(context, 'Error',
+                  "Too many incorrect pin attempt. Click on 'Log in' to use your email and password. $count try with pin, you will experience login delay!");
+            } else {
+              serviceProvider.popWarningErrorMsg(
+                  context, 'Error', serverResponse['errorMsg'].toString());
+            }
+          }
+        } else {
+          bool isLoginCounter = await storage.containsKey(key: 'loginCounter');
+          if (isLoginCounter) {
+            storage.delete(key: 'loginCounter');
           }
           pinIndex = 0;
           pinOneController.clear();
           pinTwoController.clear();
           pinThreeController.clear();
           pinFourController.clear();
-          if (loginAttemptCount > 4) {
-            setState(() {
-              isActiveBtn = false;
-              _start = 10 * loginAttemptCount;
-              startTimer();
-            });
-          } else if (loginAttemptCount > 2) {
-            String count = '';
-            if (loginAttemptCount == 3) {
-              count = 'Two more';
-            } else if (loginAttemptCount == 4) {
-              count = 'One more';
-            } else {
-              count = 'Last';
-            }
-            serviceProvider.popWarningErrorMsg(context, 'Error',
-                "Too many incorrect pin attempt. Click on 'Log in' to use your email and password. $count try with pin, you will experience login delay!");
-          } else {
-            serviceProvider.popWarningErrorMsg(
-                context, 'Error', serverResponse['errorMsg'].toString());
-          }
+
+          // Get.offAndToNamed(RouteManager.homePage, arguments: {
+          //   'token': serverResponse['token'],
+          //   'name': serverResponse['name'],
+          //   'email': serverResponse['email']
+          // });
+          Navigator.of(context)
+              .pushReplacementNamed(RouteManager.homePage, arguments: {
+            'token': serverResponse['token'],
+            'name': serverResponse['name'],
+            'email': serverResponse['email'],
+            'mobile': serverResponse['mobile'],
+            'acctBal': serverResponse['acctBal'],
+          });
         }
       } else {
-        bool isLoginCounter = await storage.containsKey(key: 'loginCounter');
-        if (isLoginCounter) {
-          storage.delete(key: 'loginCounter');
-        }
+        // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
+        serviceProvider.hudLoadingEffect(context, false);
+
         pinIndex = 0;
         pinOneController.clear();
         pinTwoController.clear();
         pinThreeController.clear();
         pinFourController.clear();
 
-        // Get.offAndToNamed(RouteManager.homePage, arguments: {
-        //   'token': serverResponse['token'],
-        //   'name': serverResponse['name'],
-        //   'email': serverResponse['email']
-        // });
-        Navigator.of(context)
-            .pushReplacementNamed(RouteManager.homePage, arguments: {
-          'token': serverResponse['token'],
-          'name': serverResponse['name'],
-          'email': serverResponse['email'],
-          'mobile': serverResponse['mobile'],
-          'acctBal': serverResponse['acctBal'],
-        });
+        serviceProvider.popWarningErrorMsg(
+            context, 'Error', 'Something went wrong!!!');
       }
-    } else {
+    } catch (error) {
       // CALL THE DIALOG TO ALLOW USER PERFORM OPERATION ON THE UI
       serviceProvider.hudLoadingEffect(context, false);
-
-      pinIndex = 0;
-      pinOneController.clear();
-      pinTwoController.clear();
-      pinThreeController.clear();
-      pinFourController.clear();
-
-      serviceProvider.popWarningErrorMsg(
-          context, 'Error', 'Something went wrong!!!');
+      serviceProvider.popWarningErrorMsg(context, 'Error', error.toString());
     }
   }
 
